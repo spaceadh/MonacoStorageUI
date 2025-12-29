@@ -10,6 +10,9 @@ import {
   IconFolder,
   IconUpload,
   IconShare,
+  IconShield,
+  IconKey,
+  IconCertificate,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -65,6 +68,28 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       href: "/dashboard/settings",
       icon: (
         <IconSettings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    // Admin Section
+    {
+      label: "IP Management",
+      href: "/dashboard/admin/ip-management",
+      icon: (
+        <IconShield className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "API Keys",
+      href: "/dashboard/admin/api-keys",
+      icon: (
+        <IconKey className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "License",
+      href: "/dashboard/admin/license",
+      icon: (
+        <IconCertificate className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
   ];
