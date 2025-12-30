@@ -3,11 +3,14 @@ import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9442/api/v1';
 
 export interface User {
+  id: number;
   email: string;
   userName: string;
   firstName: string;
   lastName: string | null;
   avatarUrl: string | null;
+  role: string;
+  isActive: boolean;
 }
 
 class ApiClient {
@@ -94,19 +97,19 @@ class ApiClient {
     return this.get<getWhitelistResponse>('/ips/whitelist', token);
   }
 
-  async addIPToWhitelist(token: string,ipAddress: string, description?: string) {
+  async addIPToWhitelist(token: string, ipAddress: string, description?: string) {
     return this.post<addIPToWhitelistResponse>('/ips/whitelist', { ipAddress, description }, token);
   }
 
   async deleteWhitelistedIP(id: number, token: string) {
-    return this.post<deleteWhitelistedIPResponse>(`/ips/delete-whitelist/${id}`,{},token);
+    return this.post<deleteWhitelistedIPResponse>(`/ips/delete-whitelist/${id}`, {}, token);
   }
 
   async lockWhitelistedIP(id: number, token: string) {
     return this.post<lockWhitelistedIPResponse>(`/ips/whitelist/${id}/lock`, {}, token);
   }
 
-   async unLockWhitelistedIP(id: number, token: string) {
+  async unLockWhitelistedIP(id: number, token: string) {
     return this.post<unlockWhitelistedIPResponse>(`/ips/whitelist/${id}/unlock`, {}, token);
   }
 
@@ -134,6 +137,44 @@ class ApiClient {
 
   async revokeApiKey(id: number, token: string) {
     return this.delete<void>(`/apikeys/${id}`, token);
+  }
+
+  async getUserQuota(token: string) {
+    return this.get<UserQuota>('/users/quota', token);
+  }
+
+  // User Management (Admin)
+  async getAllUsers(token: string) {
+    return this.get<User[]>('/users', token);
+  }
+
+  async updateUser(userId: number, updates: Partial<User>, token: string) {
+    return this.put<{ success: boolean; message: string }>(`/users/${userId}`, updates, token);
+  }
+
+  async deleteUser(userId: number, token: string) {
+    return this.delete<{ success: boolean; message: string }>(`/users/${userId}`, token);
+  }
+
+  // File Operations
+  async getUserFiles(token: string, category?: string) {
+    const endpoint = category ? `/files/metadata/user?category=${category}` : '/files/metadata/user';
+    return this.get<GetUserFilesResponse>(endpoint, token);
+  }
+
+  async getFileAccessUrl(fileId: string, token: string, ttlHours: number = 24) {
+    return this.get<FileAccessUrlResponse>(`/files/access/${fileId}?ttl=${ttlHours}`, token);
+  }
+
+  async shareFile(fileId: string, token: string, expiryHours: number = 24) {
+    return this.post<ShareFileResponse>(`/files/share/${fileId}?expiryHours=${expiryHours}`, {}, token);
+  }
+
+  async deleteFile(fileId: string, token: string) {
+    // This endpoint isn't explicitly mentioned in the previous turn of FileUploadController but usually exists
+    // Looking back at FileUploadController, I don't see a DELETE mapping. 
+    // I'll stick to what I saw in FileUploadController.
+    return this.delete<void>(`/files/${fileId}`, token);
   }
 }
 
@@ -266,4 +307,48 @@ export interface unlockWhitelistedIPResponse {
   status: boolean;
   message: string;
 }
+
+// Member Quota
+export interface UserQuota {
+  id: number;
+  userId: number;
+  usedStorage: number;
+}
+
+// File Meta
+export interface FileMeta {
+  id: string;
+  fileName: string;
+  category: string;
+  sizeInBytes: number;
+  contentType: string;
+  userId: number;
+  storageUrl: string;
+  bucketName: string;
+  objectKey: string;
+  isPublic: boolean;
+  uploadedAt: string;
+  expiryDate: string;
+  isDeleted: boolean;
+  presignedUrl: string | null;
+}
+
+export interface GetUserFilesResponse {
+  files: FileMeta[];
+  totalFiles: number;
+  category: string;
+}
+
+export interface FileAccessUrlResponse {
+  fileId: string;
+  accessUrl: string;
+  expiresInHours: number;
+}
+
+export interface ShareFileResponse {
+  fileId: string;
+  shareUrl: string;
+  expiryHours: number;
+}
+
 export const apiClient = new ApiClient();

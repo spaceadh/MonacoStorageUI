@@ -14,6 +14,8 @@ import {
   IconShield,
   IconKey,
   IconCertificate,
+  IconCloudUpload,
+  IconUsers,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -30,53 +32,39 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       ),
     },
     {
-      label: "My Files",
+      label: "My Storage",
       href: "/dashboard/files",
       icon: (
         <IconFiles className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
-      label: "Folders",
-      href: "/dashboard/folders",
-      icon: (
-        <IconFolder className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Upload",
+      label: "Upload Assets",
       href: "/dashboard/upload",
       icon: (
-        <IconUpload className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+        <IconCloudUpload className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
-    {
-      label: "Shared",
-      href: "/dashboard/shared",
-      icon: (
-        <IconShare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Profile",
-      href: "/dashboard/profile",
-      icon: (
-        <IconUserBolt className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Settings",
-      href: "/dashboard/settings",
-      icon: (
-        <IconSettings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
+    // {
+    //   label: "Settings",
+    //   href: "/dashboard/settings",
+    //   icon: (
+    //     <IconSettings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+    //   ),
+    // },
     // Admin Section
     {
       label: "IP Management",
       href: "/dashboard/admin/ip-management",
       icon: (
         <IconShield className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "User Management",
+      href: "/dashboard/admin/users",
+      icon: (
+        <IconUsers className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
@@ -97,7 +85,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   const router = useRouter();
 
-  const { user,logout } = useAuth();
+  const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
 
   const handleLogout = async (e: React.FormEvent) => {
