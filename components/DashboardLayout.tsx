@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import {
   IconArrowLeft,
@@ -94,8 +95,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     },
   ];
 
-  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const { user,logout } = useAuth();
   const [open, setOpen] = useState(false);
+
+  const handleLogout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await logout();
+    router.push('/login');
+  }
+
+  console.log("DashboardLayout render, user:", user);
 
   return (
     <div
@@ -116,7 +127,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
           <div>
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className={cn(
                 "flex items-center justify-start gap-2 group/sidebar py-2 w-full text-left"
               )}
@@ -135,11 +146,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             {user && (
               <SidebarLink
                 link={{
-                  label: user.name,
+                  label: user.userName,
                   href: "/dashboard/profile",
                   icon: (
                     <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                      {user.name.charAt(0).toUpperCase()}
+                      {user.userName.charAt(0).toUpperCase()}
                     </div>
                   ),
                 }}

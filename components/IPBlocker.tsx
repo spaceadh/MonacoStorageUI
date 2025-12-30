@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { apiClient } from "@/lib/api";
 import { IconShieldLock, IconPlus, IconLoader2 } from "@tabler/icons-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { a } from "framer-motion/m";
 
 interface IPBlockerProps {
     children: React.ReactNode;
@@ -10,6 +12,7 @@ interface IPBlockerProps {
 }
 
 export function IPBlocker({ children, enabled = true }: IPBlockerProps) {
+    const { accessToken } = useAuth();
     const [isWhitelisted, setIsWhitelisted] = useState<boolean | null>(null);
     const [currentIP, setCurrentIP] = useState<string>("");
     const [isLoading, setIsLoading] = useState(true);
@@ -29,16 +32,16 @@ export function IPBlocker({ children, enabled = true }: IPBlockerProps) {
         try {
             setIsLoading(true);
             const [ipResult, checkResult] = await Promise.all([
-                apiClient.getCurrentIP(),
-                apiClient.checkIPWhitelisted(),
+                apiClient.getCurrentIP(accessToken!),
+                apiClient.checkIPWhitelisted(accessToken!),
             ]);
 
-            if (ipResult.status && ipResult.data) {
-                setCurrentIP(ipResult.data.ipAddress);
+            if (ipResult) {
+                setCurrentIP(ipResult.ipAddress);
             }
 
-            if (checkResult.status) {
-                setIsWhitelisted(checkResult.data ?? false);
+            if (checkResult) {
+                setIsWhitelisted(checkResult ?? false);
             } else {
                 // If check fails, assume not whitelisted
                 setIsWhitelisted(false);
@@ -56,11 +59,11 @@ export function IPBlocker({ children, enabled = true }: IPBlockerProps) {
         try {
             setIsAdding(true);
             setError(null);
-            const result = await apiClient.addIPToWhitelist(currentIP, "Added via IP Blocker");
-            if (result.status) {
+            const result = await apiClient.addIPToWhitelist(accessToken!, currentIP, "Added via IP Blocker");
+            if (result) {
                 setIsWhitelisted(true);
             } else {
-                setError(result.message || "Failed to add IP");
+                setError("Failed to add IP");
             }
         } catch (err) {
             setError("Failed to add IP to whitelist");

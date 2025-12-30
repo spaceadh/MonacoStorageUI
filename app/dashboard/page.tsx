@@ -88,7 +88,7 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-4xl font-bold text-neutral-800 dark:text-neutral-100">
-            Welcome back, {user?.name}!
+            Welcome back, {user?.userName}!
           </h1>
           <p className="text-neutral-600 dark:text-neutral-400 mt-2">
             Your premium secure file storage dashboard

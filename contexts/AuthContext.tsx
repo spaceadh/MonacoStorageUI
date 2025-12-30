@@ -1,15 +1,13 @@
 "use client";
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-}
+// import {  } from '@/lib/api';
+import { apiClient, LicenseInfo } from '@/lib/api';
+import type { User } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
+  licenses: LicenseInfo[] | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -21,17 +19,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [licenses, setLicenses] = useState<LicenseInfo[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check for stored auth state on mount
     const storedUser = localStorage.getItem('monaco_user');
-    if (storedUser) {
+    const storedToken = localStorage.getItem('monaco_token');
+    
+    if (storedUser && storedToken) {
       try {
         setUser(JSON.parse(storedUser));
+        setAccessToken(storedToken);
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('monaco_user');
+        localStorage.removeItem('monaco_token');
       }
     }
     setIsLoading(false);
@@ -40,18 +44,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await apiClient.loginUser(email, password);
+
+      console.log('Login response:', response);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Login failed');
+      }
+
+      const { user, token } = response.data;
       
-      // Mock user data
-      const userData: User = {
-        id: '1',
-        email,
-        name: email.split('@')[0],
-      };
-      
-      setUser(userData);
-      localStorage.setItem('monaco_user', JSON.stringify(userData));
+      if (!user || !token) {
+        throw new Error('Invalid login response');
+      }
+
+      setUser(user);
+      setAccessToken(token);
+      localStorage.setItem('monaco_token', token);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -60,21 +69,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, userName: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await apiClient.registerDefaultUser(email, password, userName);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Registration failed');
+      }
+
+      const { user: userInfo, license, token } = response.data;
       
-      // Mock user data
-      const userData: User = {
-        id: '1',
-        email,
-        name,
-      };
+      if (!userInfo || !token) {
+        throw new Error('Invalid registration response');
+      }
+
+      setUser(userInfo);
+      setAccessToken(token);
+      localStorage.setItem('monaco_token', token);
       
-      setUser(userData);
-      localStorage.setItem('monaco_user', JSON.stringify(userData));
+      if (license) {
+        setLicenses([license]);
+      }
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
@@ -83,13 +99,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('monaco_user');
+  const logout = async () => {
+    try {
+      if (accessToken) {
+        await apiClient.logoutUser(accessToken);
+      }
+      setUser(null);
+      setAccessToken(null);
+      setLicenses(null);
+      localStorage.removeItem('monaco_token');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still clear local state even if API call fails
+      setUser(null);
+      setAccessToken(null);
+      setLicenses(null);
+      localStorage.removeItem('monaco_token');
+    }
   };
 
   const value: AuthContextType = {
     user,
+    licenses,
+    accessToken,
     isAuthenticated: !!user,
     isLoading,
     login,

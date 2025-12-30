@@ -4,19 +4,18 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { BackgroundGradient } from "@/components/ui/background-gradient";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login, isLoading } = useAuth();
+  const { signup, isLoading } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-
     try {
-      await login(email, password);
+      await signup(email, password, email.split('@')[0]);
       router.push("/dashboard");
     } catch (err) {
       setError("Failed to login. Please try again.");
@@ -81,18 +80,18 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            {isLoading ? "Signing in..." : "Sign In"}
+            {isLoading ? "Signing up..." : "Sign up"}
           </button>
         </form>
-        {/* link to register page */}
+        {/* link to login page */}
         <div className="mt-6 text-center">
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Don't have an account?{" "}
+            Already have an account?{" "}
             <a
-              href="/register"
+              href="/login"
               className="text-blue-500 hover:underline"
             >
-              Sign up
+              Sign in
             </a>
           </p>
         </div>

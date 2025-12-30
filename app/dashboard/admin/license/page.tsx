@@ -11,8 +11,10 @@ import {
     IconX,
     IconLoader2,
 } from "@tabler/icons-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LicensePage() {
+    const { accessToken } = useAuth();
     const [license, setLicense] = useState<LicenseInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isValidating, setIsValidating] = useState(false);
@@ -30,11 +32,11 @@ export default function LicensePage() {
         try {
             setIsLoading(true);
             setError(null);
-            const result = await apiClient.getLicenseInfo();
-            if (result.status && result.data) {
-                setLicense(result.data);
+            const result = await apiClient.getLicenseInfo(accessToken!);
+            if (result) {
+                setLicense(result);
             } else {
-                setError(result.message || "Failed to load license info");
+                setError("Failed to load license info");
             }
         } catch (err) {
             setError("Failed to load license info");
@@ -47,12 +49,12 @@ export default function LicensePage() {
         try {
             setIsValidating(true);
             setValidationResult(null);
-            const result = await apiClient.validateLicense();
-            if (result.status && result.data) {
-                setValidationResult(result.data);
+            const result = await apiClient.validateLicense(accessToken!);
+            if (result) {
+                setValidationResult(result);
                 loadLicense(); // Refresh license info after validation
             } else {
-                setError(result.message || "Failed to validate license");
+                setError("Failed to validate license");
             }
         } catch (err) {
             setError("Failed to validate license");
@@ -64,14 +66,12 @@ export default function LicensePage() {
     const handleRenew = async () => {
         try {
             setIsRenewing(true);
-            const result = await apiClient.renewLicense(newLicenseKey);
-            if (result.status) {
+            const result = await apiClient.renewLicense(accessToken!, newLicenseKey);
+            if (result) {
                 setShowRenewModal(false);
                 setNewLicenseKey("");
                 loadLicense();
-            } else {
-                setError(result.message || "Failed to renew license");
-            }
+            } 
         } catch (err) {
             setError("Failed to renew license");
         } finally {

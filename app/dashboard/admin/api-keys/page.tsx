@@ -15,8 +15,10 @@ import {
     IconEye,
     IconEyeOff,
 } from "@tabler/icons-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ApiKeysPage() {
+    const { accessToken } = useAuth();
     const [keys, setKeys] = useState<ApiKey[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -34,11 +36,12 @@ export default function ApiKeysPage() {
         try {
             setIsLoading(true);
             setError(null);
-            const result = await apiClient.getApiKeys();
-            if (result.status && result.data) {
-                setKeys(result.data);
+            const result = await apiClient.getApiKeys(accessToken!);
+            console.log(result);
+            if (result) {
+                setKeys(result);
             } else {
-                setError(result.message || "Failed to load API keys");
+                setError("Failed to load API keys");
             }
         } catch (err) {
             setError("Failed to load API keys");
@@ -52,15 +55,16 @@ export default function ApiKeysPage() {
             setIsGenerating(true);
             const result = await apiClient.generateApiKey(
                 newKey.name,
+                accessToken!,
                 newKey.expiresInDays,
                 ["files:read", "files:write"]
             );
-            if (result.status && result.data) {
-                setGeneratedKey(result.data);
+            if (result) {
+                setGeneratedKey(result);
                 setNewKey({ name: "", expiresInDays: 365 });
                 loadKeys();
             } else {
-                setError(result.message || "Failed to generate API key");
+                setError("Failed to generate API key");
             }
         } catch (err) {
             setError("Failed to generate API key");
@@ -74,12 +78,8 @@ export default function ApiKeysPage() {
             return;
 
         try {
-            const result = await apiClient.revokeApiKey(id);
-            if (result.status) {
-                loadKeys();
-            } else {
-                setError(result.message || "Failed to revoke API key");
-            }
+            await apiClient.revokeApiKey(id, accessToken!);
+            loadKeys();
         } catch (err) {
             setError("Failed to revoke API key");
         }
