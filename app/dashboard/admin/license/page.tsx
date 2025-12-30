@@ -14,7 +14,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function LicensePage() {
-    const { accessToken } = useAuth();
+    const { accessToken, isLoading: authLoading } = useAuth();
     const [license, setLicense] = useState<LicenseInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isValidating, setIsValidating] = useState(false);
@@ -25,14 +25,18 @@ export default function LicensePage() {
     const [validationResult, setValidationResult] = useState<LicenseValidation | null>(null);
 
     useEffect(() => {
-        loadLicense();
-    }, []);
+        if (!authLoading && accessToken) {
+            loadLicense();
+        }
+    }, [accessToken, authLoading]);
 
     const loadLicense = async () => {
+        if (!accessToken) return;
+        console.log('[License Page] Loading with token:', accessToken.substring(0, 20) + '...');
         try {
             setIsLoading(true);
             setError(null);
-            const result = await apiClient.getLicenseInfo(accessToken!);
+            const result = await apiClient.getLicenseInfo(accessToken);
             if (result) {
                 setLicense(result);
             } else {
@@ -46,10 +50,11 @@ export default function LicensePage() {
     };
 
     const handleValidate = async () => {
+        if (!accessToken) return;
         try {
             setIsValidating(true);
             setValidationResult(null);
-            const result = await apiClient.validateLicense(accessToken!);
+            const result = await apiClient.validateLicense(accessToken);
             if (result) {
                 setValidationResult(result);
                 loadLicense(); // Refresh license info after validation
@@ -64,9 +69,10 @@ export default function LicensePage() {
     };
 
     const handleRenew = async () => {
+        if (!accessToken) return;
         try {
             setIsRenewing(true);
-            const result = await apiClient.renewLicense(accessToken!, newLicenseKey);
+            const result = await apiClient.renewLicense(newLicenseKey, accessToken);
             if (result) {
                 setShowRenewModal(false);
                 setNewLicenseKey("");
@@ -85,6 +91,17 @@ export default function LicensePage() {
         if (license.daysRemaining <= 30) return "amber";
         return "green";
     };
+
+    // Show loading while auth is initializing
+    if (authLoading) {
+        return (
+            <DashboardLayout>
+                <div className="flex items-center justify-center h-64">
+                    <IconLoader2 className="h-8 w-8 animate-spin text-blue-500" />
+                </div>
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout>

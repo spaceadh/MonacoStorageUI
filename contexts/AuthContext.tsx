@@ -1,8 +1,9 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-// import {  } from '@/lib/api';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiClient, LicenseInfo } from '@/lib/api';
 import type { User } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -22,31 +23,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [licenses, setLicenses] = useState<LicenseInfo[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const verifyingRef = useRef(false);
+  const router = useRouter();
 
+  // Verify session on mount and refresh token
   useEffect(() => {
-    // Check for stored auth state on mount
-    const storedUser = localStorage.getItem('monaco_user');
-    const storedToken = localStorage.getItem('monaco_token');
-    
-    if (storedUser && storedToken) {
-      try {
-        setUser(JSON.parse(storedUser));
-        setAccessToken(storedToken);
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('monaco_user');
-        localStorage.removeItem('monaco_token');
+    const verifySession = async () => {
+      // Prevent multiple simultaneous verify calls using ref
+      if (verifyingRef.current) {
+        console.log('[AuthContext] Verify already in progress, skipping...');
+        return;
       }
-    }
-    setIsLoading(false);
-  }, []);
+      
+      const storedToken = localStorage.getItem('monaco_token');
+      
+      if (!storedToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        verifyingRef.current = true;
+        setIsVerifying(true);
+        console.log('[AuthContext] Verifying session with token:', storedToken.substring(0, 20) + '...');
+        const response = await apiClient.verifyUser(storedToken);
+        
+        if (response.success && response.data) {
+          const { user: verifiedUser, token: refreshedToken } = response.data;
+          console.log('[AuthContext] Session verified. New token:', refreshedToken.substring(0, 20) + '...');
+          setUser(verifiedUser);
+          setAccessToken(refreshedToken);
+          localStorage.setItem('monaco_user', JSON.stringify(verifiedUser));
+          localStorage.setItem('monaco_token', refreshedToken);
+        } else {
+          // Invalid session - clear storage
+          console.log('[AuthContext] Session verification failed - clearing state');
+          clearAuthState();
+        }
+      } catch (error: any) {
+        console.error('Session verification failed:', error);
+        
+        // Check if backend sent redirect flag
+        if (error?.response?.data?.redirect || error?.response?.status === 401) {
+          clearAuthState();
+          router.push('/login');
+          toast.error('Session expired. Please login again.');
+        }
+      } finally {
+        verifyingRef.current = false;
+        setIsVerifying(false);
+        setIsLoading(false);
+      }
+    };
+
+    verifySession();
+  }, [router]);
+
+  const clearAuthState = () => {
+    setUser(null);
+    setAccessToken(null);
+    setLicenses(null);
+    localStorage.removeItem('monaco_user');
+    localStorage.removeItem('monaco_token');
+  };
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
       const response = await apiClient.loginUser(email, password);
-
-      console.log('Login response:', response);
 
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Login failed');
@@ -60,9 +105,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(user);
       setAccessToken(token);
+      localStorage.setItem('monaco_user', JSON.stringify(user));
       localStorage.setItem('monaco_token', token);
-    } catch (error) {
+      
+      toast.success(`Welcome back, ${user.userName}`);
+    } catch (error: any) {
       console.error('Login error:', error);
+      const message = error?.response?.data?.message || error.message || 'Login failed';
+      toast.error(message);
       throw error;
     } finally {
       setIsLoading(false);
@@ -86,13 +136,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(userInfo);
       setAccessToken(token);
+      localStorage.setItem('monaco_user', JSON.stringify(userInfo));
       localStorage.setItem('monaco_token', token);
       
       if (license) {
         setLicenses([license]);
       }
-    } catch (error) {
+
+      toast.success(`Account created successfully! Welcome, ${userInfo.userName}`);
+    } catch (error: any) {
       console.error('Signup error:', error);
+      const message = error?.response?.data?.message || error.message || 'Registration failed';
+      toast.error(message);
       throw error;
     } finally {
       setIsLoading(false);
@@ -104,17 +159,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (accessToken) {
         await apiClient.logoutUser(accessToken);
       }
-      setUser(null);
-      setAccessToken(null);
-      setLicenses(null);
-      localStorage.removeItem('monaco_token');
     } catch (error) {
       console.error('Logout error:', error);
-      // Still clear local state even if API call fails
-      setUser(null);
-      setAccessToken(null);
-      setLicenses(null);
-      localStorage.removeItem('monaco_token');
+    } finally {
+      clearAuthState();
+      toast.success('Logged out successfully');
+      router.push('/login');
     }
   };
 

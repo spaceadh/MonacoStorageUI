@@ -85,6 +85,35 @@ export const DesktopSidebar = ({
   ...props
 }: React.ComponentProps<typeof motion.div>) => {
   const { open, setOpen, animate } = useSidebar();
+  const [closeTimerRef, setCloseTimerRef] = React.useState<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    // Cancel any pending close timer
+    if (closeTimerRef) {
+      clearTimeout(closeTimerRef);
+      setCloseTimerRef(null);
+    }
+    setOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    // Delay close by 2 seconds on desktop
+    const timer = setTimeout(() => {
+      setOpen(false);
+      setCloseTimerRef(null);
+    }, 2000);
+    setCloseTimerRef(timer);
+  };
+
+  // Cleanup timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (closeTimerRef) {
+        clearTimeout(closeTimerRef);
+      }
+    };
+  }, [closeTimerRef]);
+
   return (
     <>
       <motion.div
@@ -95,8 +124,8 @@ export const DesktopSidebar = ({
         animate={{
           width: animate ? (open ? "300px" : "60px") : "300px",
         }}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         {...props}
       >
         {children}

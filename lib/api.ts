@@ -20,14 +20,25 @@ class ApiClient {
         'Content-Type': 'application/json',
       },
     });
+
+    // Add response interceptor for better error handling
+    this.axiosInstance.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        console.error('API Error:', error.response?.data || error.message);
+        return Promise.reject(error);
+      }
+    );
   }
 
   private getAuthConfig(token?: string): AxiosRequestConfig {
-    const config: AxiosRequestConfig = {};
+    const config: AxiosRequestConfig = {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    };
     if (token) {
-      config.headers = {
-        Authorization: `Bearer ${token}`,
-      };
+      config.headers!['Authorization'] = `Bearer ${token}`;
     }
     return config;
   }
@@ -59,6 +70,10 @@ class ApiClient {
 
   async loginUser(email: string, password: string) {
     return this.post<LoginResponse>('/users/login', { email, password });
+  }
+
+  async verifyUser(token: string) {
+    return this.get<VerifyResponse>('/users/verify', token);
   }
 
   // log out user
@@ -106,11 +121,11 @@ class ApiClient {
 
   // API Keys
   async getApiKeys(token: string) {
-    return this.get<ApiKey[]>('/apikeys', token);
+    return this.get<GetAPIKeysResponse>('/apikeys', token);
   }
 
   async generateApiKey(name: string, token: string, expiresInDays: number, scopes?: string[]) {
-    return this.post<GeneratedApiKey>('/apikeys/generate', { name, expiresInDays, scopes }, token);
+    return this.post<GeneratedAPIKeyResponse>('/apikeys/generate', { name, expiresInDays, scopes }, token);
   }
 
   async revokeApiKey(id: number, token: string) {
@@ -133,6 +148,16 @@ export interface RegisterResponse {
 }
 
 export interface LoginResponse {
+  message: string;
+  token: string;
+  success: boolean;
+  data: {
+    token: string;
+    user: User;
+  };
+}
+
+export interface VerifyResponse {
   message: string;
   token: string;
   success: boolean;
@@ -191,6 +216,16 @@ export interface GeneratedApiKey {
   name: string;
   scopes: string[];
   expiresAt: string | null;
+}
+
+export interface GetAPIKeysResponse {
+  message: string;
+  data: ApiKey[];
+}
+
+export interface GeneratedAPIKeyResponse {
+  message: string;
+  response: GeneratedApiKey;
 }
 
 export const apiClient = new ApiClient();

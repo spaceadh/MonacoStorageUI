@@ -18,7 +18,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function ApiKeysPage() {
-    const { accessToken } = useAuth();
+    const { accessToken, isLoading: authLoading } = useAuth();
     const [keys, setKeys] = useState<ApiKey[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -29,17 +29,21 @@ export default function ApiKeysPage() {
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        loadKeys();
-    }, []);
+        if (!authLoading && accessToken) {
+            loadKeys();
+        }
+    }, [accessToken, authLoading]);
 
     const loadKeys = async () => {
+        if (!accessToken) return;
+        console.log('[API Keys Page] Loading with token:', accessToken.substring(0, 20) + '...');
         try {
             setIsLoading(true);
             setError(null);
-            const result = await apiClient.getApiKeys(accessToken!);
-            console.log(result);
+            const result = await apiClient.getApiKeys(accessToken);
+            console.log(result.data);
             if (result) {
-                setKeys(result);
+                setKeys(result.data);
             } else {
                 setError("Failed to load API keys");
             }
@@ -51,16 +55,18 @@ export default function ApiKeysPage() {
     };
 
     const handleGenerateKey = async () => {
+        if (!accessToken) return;
+        
         try {
             setIsGenerating(true);
             const result = await apiClient.generateApiKey(
                 newKey.name,
-                accessToken!,
+                accessToken,
                 newKey.expiresInDays,
                 ["files:read", "files:write"]
             );
             if (result) {
-                setGeneratedKey(result);
+                setGeneratedKey(result.response);
                 setNewKey({ name: "", expiresInDays: 365 });
                 loadKeys();
             } else {
@@ -74,11 +80,12 @@ export default function ApiKeysPage() {
     };
 
     const handleRevokeKey = async (id: number) => {
+        if (!accessToken) return;
         if (!confirm("Are you sure you want to revoke this API key? This action cannot be undone."))
             return;
 
         try {
-            await apiClient.revokeApiKey(id, accessToken!);
+            await apiClient.revokeApiKey(id, accessToken);
             loadKeys();
         } catch (err) {
             setError("Failed to revoke API key");
@@ -90,6 +97,17 @@ export default function ApiKeysPage() {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
+
+    // Show loading while auth is initializing
+    if (authLoading) {
+        return (
+            <DashboardLayout>
+                <div className="flex items-center justify-center h-64">
+                    <IconLoader2 className="h-8 w-8 animate-spin text-blue-500" />
+                </div>
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout>

@@ -15,7 +15,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function IPManagementPage() {
-    const { accessToken } = useAuth();
+    const { accessToken, isLoading: authLoading } = useAuth();
     const [ips, setIps] = useState<WhitelistedIP[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -24,14 +24,18 @@ export default function IPManagementPage() {
     const [isAdding, setIsAdding] = useState(false);
 
     useEffect(() => {
-        loadIPs();
-    }, []);
+        if (!authLoading && accessToken) {
+            loadIPs();
+        }
+    }, [accessToken, authLoading]);
 
     const loadIPs = async () => {
+        if (!accessToken) return;
+        console.log('[IP Management Page] Loading with token:', accessToken.substring(0, 20) + '...');
         try {
             setIsLoading(true);
             setError(null);
-            const result = await apiClient.getWhitelist(accessToken!);
+            const result = await apiClient.getWhitelist(accessToken);
             if (result) {
                 setIps(result);
             } else {
@@ -45,10 +49,11 @@ export default function IPManagementPage() {
     };
 
     const handleAddIP = async () => {
+        if (!accessToken) return;
         try {
             setIsAdding(true);
             const result = await apiClient.addIPToWhitelist(
-                accessToken!,
+                accessToken,
                 newIP.ipAddress,
                 newIP.description,
             );
@@ -67,11 +72,12 @@ export default function IPManagementPage() {
     };
 
     const handleDeleteIP = async (id: number) => {
+        if (!accessToken) return;
         if (!confirm("Are you sure you want to remove this IP from the whitelist?"))
             return;
 
         try {
-            await apiClient.deleteWhitelistedIP(id, accessToken!);
+            await apiClient.deleteWhitelistedIP(id, accessToken);
             loadIPs();
         } catch (err) {
             setError("Failed to delete IP");
@@ -79,13 +85,25 @@ export default function IPManagementPage() {
     };
 
     const handleLockIP = async (id: number) => {
+        if (!accessToken) return;
         try {
-            await apiClient.lockWhitelistedIP(id, accessToken!);
+            await apiClient.lockWhitelistedIP(id, accessToken);
             loadIPs();
         } catch (err) {
             setError("Failed to lock IP");
         }
     };
+
+    // Show loading while auth is initializing
+    if (authLoading) {
+        return (
+            <DashboardLayout>
+                <div className="flex items-center justify-center h-64">
+                    <IconLoader2 className="h-8 w-8 animate-spin text-blue-500" />
+                </div>
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout>
