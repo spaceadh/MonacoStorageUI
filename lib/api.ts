@@ -25,7 +25,7 @@ class ApiClient {
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error) => {
-        console.error('API Error:', error.response?.data || error.message);
+        console.error('API Error:', error.response || error.message);
         return Promise.reject(error);
       }
     );
@@ -91,24 +91,28 @@ class ApiClient {
   }
 
   async getWhitelist(token: string) {
-    return this.get<WhitelistedIP[]>('/ips/whitelist', token);
+    return this.get<getWhitelistResponse>('/ips/whitelist', token);
   }
 
   async addIPToWhitelist(token: string,ipAddress: string, description?: string) {
-    return this.post<WhitelistedIP>('/ips/whitelist', { ipAddress, description }, token);
+    return this.post<addIPToWhitelistResponse>('/ips/whitelist', { ipAddress, description }, token);
   }
 
   async deleteWhitelistedIP(id: number, token: string) {
-    return this.delete<void>(`/ips/whitelist/${id}`, token);
+    return this.post<deleteWhitelistedIPResponse>(`/ips/delete-whitelist/${id}`,{},token);
   }
 
   async lockWhitelistedIP(id: number, token: string) {
-    return this.post<WhitelistedIP>(`/ips/whitelist/${id}/lock`, {}, token);
+    return this.post<lockWhitelistedIPResponse>(`/ips/whitelist/${id}/lock`, {}, token);
+  }
+
+   async unLockWhitelistedIP(id: number, token: string) {
+    return this.post<unlockWhitelistedIPResponse>(`/ips/whitelist/${id}/unlock`, {}, token);
   }
 
   // License Management
   async getLicenseInfo(token: string) {
-    return this.get<LicenseInfo>('/license/info', token);
+    return this.get<getLicenseInfoResponse>('/license/info', token);
   }
 
   async renewLicense(licenseKey: string, token: string) {
@@ -228,4 +232,38 @@ export interface GeneratedAPIKeyResponse {
   response: GeneratedApiKey;
 }
 
+export interface getLicenseInfoResponse {
+  status: boolean;
+  message: string;
+  data: LicenseInfo;
+}
+
+export interface getWhitelistResponse {
+  status: boolean;
+  message: string;
+  data: WhitelistedIP[];
+}
+
+// addIPToWhitelist
+export interface addIPToWhitelistResponse {
+  status: boolean;
+  message: string;
+  data: WhitelistedIP;
+}
+
+// deleteWhitelistedIP
+export interface deleteWhitelistedIPResponse {
+  status: boolean;
+  message: string;
+}
+// lockWhitelistedIP
+export interface lockWhitelistedIPResponse {
+  status: boolean;
+  message: string;
+}
+// unlockWhitelistedIP
+export interface unlockWhitelistedIPResponse {
+  status: boolean;
+  message: string;
+}
 export const apiClient = new ApiClient();

@@ -105,9 +105,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     await logout();
     router.push('/login');
   }
-
-  console.log("DashboardLayout render, user:", user);
-
   return (
     <div
       className={cn(

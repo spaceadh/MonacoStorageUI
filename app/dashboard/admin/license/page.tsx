@@ -32,13 +32,12 @@ export default function LicensePage() {
 
     const loadLicense = async () => {
         if (!accessToken) return;
-        console.log('[License Page] Loading with token:', accessToken.substring(0, 20) + '...');
         try {
             setIsLoading(true);
             setError(null);
             const result = await apiClient.getLicenseInfo(accessToken);
-            if (result) {
-                setLicense(result);
+            if (result.status && result.data) {
+                setLicense(result.data);
             } else {
                 setError("Failed to load license info");
             }
@@ -179,7 +178,7 @@ export default function LicensePage() {
                             {/* License Key */}
                             <div>
                                 <p className="text-sm text-neutral-400 mb-1">License Key</p>
-                                <p className="text-lg font-mono text-white">{license.licenseKey}</p>
+                                <p className="text-lg text-neutral-400 mb-1">{license.licenseKey}</p>
                             </div>
 
                             {/* Status */}

@@ -9,10 +9,12 @@ import {
     IconLock,
     IconCheck,
     IconX,
+    IconLockOpen2,
     IconLoader2,
     IconRefresh,
 } from "@tabler/icons-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export default function IPManagementPage() {
     const { accessToken, isLoading: authLoading } = useAuth();
@@ -31,13 +33,12 @@ export default function IPManagementPage() {
 
     const loadIPs = async () => {
         if (!accessToken) return;
-        console.log('[IP Management Page] Loading with token:', accessToken.substring(0, 20) + '...');
         try {
             setIsLoading(true);
             setError(null);
             const result = await apiClient.getWhitelist(accessToken);
-            if (result) {
-                setIps(result);
+            if (result.status && result.data) {
+                setIps(result.data);
             } else {
                 setError("Failed to load IP whitelist");
             }
@@ -57,7 +58,7 @@ export default function IPManagementPage() {
                 newIP.ipAddress,
                 newIP.description,
             );
-            if (result) {
+            if (result.status && result.data) {
                 setShowAddModal(false);
                 setNewIP({ ipAddress: "", description: "" });
                 loadIPs();
@@ -84,10 +85,18 @@ export default function IPManagementPage() {
         }
     };
 
-    const handleLockIP = async (id: number) => {
+    const handleLockingIP = async (id: number,type: string) => {
         if (!accessToken) return;
         try {
-            await apiClient.lockWhitelistedIP(id, accessToken);
+            let response;
+            // If locked, then unlock.
+            if(type === "locked"){
+              response = await apiClient.unLockWhitelistedIP(id, accessToken);
+              toast.success(response.message);
+            }else if (type === "unlocked"){
+              response = await apiClient.lockWhitelistedIP(id, accessToken);
+              toast.success(response.message);
+            }
             loadIPs();
         } catch (err) {
             setError("Failed to lock IP");
@@ -195,9 +204,13 @@ export default function IPManagementPage() {
                                                         Inactive
                                                     </span>
                                                 )}
-                                                {ip.isLocked && (
+                                                {ip.isLocked ? (
                                                     <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-amber-500/10 text-amber-400">
                                                         <IconLock className="h-3 w-3" /> Locked
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-500/10 text-blue-400">
+                                                        <IconLockOpen2 className="h-3 w-3" /> Unlocked
                                                     </span>
                                                 )}
                                             </div>
@@ -207,24 +220,20 @@ export default function IPManagementPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex gap-2">
-                                                {!ip.isLocked && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => handleLockIP(ip.id)}
-                                                            className="p-2 text-neutral-400 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-colors"
-                                                            title="Lock IP"
-                                                        >
-                                                            <IconLock className="h-4 w-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteIP(ip.id)}
-                                                            className="p-2 text-neutral-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                                                            title="Delete IP"
-                                                        >
-                                                            <IconTrash className="h-4 w-4" />
-                                                        </button>
-                                                    </>
-                                                )}
+                                                <button
+                                                    onClick={() => handleLockingIP(ip.id, ip.isLocked ? "locked" : "unlocked")}
+                                                    className="p-2 text-neutral-400 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-colors"
+                                                    title={ip.isLocked ? "UnLock IP" : "Lock IP"}
+                                                >
+                                                    {ip.isLocked ? <IconLockOpen2 className="h-4 w-4" /> : <IconLock className="h-4 w-4" />}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteIP(ip.id)}
+                                                    className="p-2 text-neutral-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                                    title="Delete IP"
+                                                >
+                                                    <IconTrash className="h-4 w-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>

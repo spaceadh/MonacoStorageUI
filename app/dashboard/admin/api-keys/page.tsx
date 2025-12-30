@@ -36,12 +36,10 @@ export default function ApiKeysPage() {
 
     const loadKeys = async () => {
         if (!accessToken) return;
-        console.log('[API Keys Page] Loading with token:', accessToken.substring(0, 20) + '...');
         try {
             setIsLoading(true);
             setError(null);
             const result = await apiClient.getApiKeys(accessToken);
-            console.log(result.data);
             if (result) {
                 setKeys(result.data);
             } else {

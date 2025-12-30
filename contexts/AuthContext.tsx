@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const verifySession = async () => {
       // Prevent multiple simultaneous verify calls using ref
       if (verifyingRef.current) {
-        console.log('[AuthContext] Verify already in progress, skipping...');
+        // console.log('[AuthContext] Verify already in progress, skipping...');
         return;
       }
       
@@ -46,24 +46,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         verifyingRef.current = true;
         setIsVerifying(true);
-        console.log('[AuthContext] Verifying session with token:', storedToken.substring(0, 20) + '...');
         const response = await apiClient.verifyUser(storedToken);
         
         if (response.success && response.data) {
           const { user: verifiedUser, token: refreshedToken } = response.data;
-          console.log('[AuthContext] Session verified. New token:', refreshedToken.substring(0, 20) + '...');
           setUser(verifiedUser);
           setAccessToken(refreshedToken);
           localStorage.setItem('monaco_user', JSON.stringify(verifiedUser));
           localStorage.setItem('monaco_token', refreshedToken);
         } else {
           // Invalid session - clear storage
-          console.log('[AuthContext] Session verification failed - clearing state');
           clearAuthState();
         }
       } catch (error: any) {
-        console.error('Session verification failed:', error);
-        
+        console.error('Session verification failed:', error);        
         // Check if backend sent redirect flag
         if (error?.response?.data?.redirect || error?.response?.status === 401) {
           clearAuthState();
