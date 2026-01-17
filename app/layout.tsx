@@ -1,11 +1,23 @@
 import type { Metadata } from "next";
+import { Instrument_Serif, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from 'sonner';
 
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-serif",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
 export const metadata: Metadata = {
-  title: "MonacoStorage - Premium Secure File Storage",
-  description: "Luxury-grade protection and management of your digital files",
+  title: "MonacoStorage | The Digital Vault",
+  description: "Luxury-grade protection and management of your digital assets.",
 };
 
 export default function RootLayout({
@@ -14,21 +26,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="antialiased">
-        <AuthProvider>{children}</AuthProvider>
+    <html lang="en" className={`${instrumentSerif.variable} ${inter.variable} antialiased`}>
+      <body className="font-sans">
+        <AuthProvider>
+          <div className="relative min-h-screen">
+            {children}
+          </div>
+        </AuthProvider>
         <Toaster 
           position="top-right"
-          theme="dark"
           richColors
           closeButton
           duration={4000}
           toastOptions={{
-            style: {
-              background: 'rgb(38 38 38)',
-              border: '1px solid rgb(64 64 64)',
-              color: 'rgb(250 250 250)',
-            },
+            className: "bg-vault-surface border-vault-border text-vault-text-primary font-sans",
           }}
         />
       </body>

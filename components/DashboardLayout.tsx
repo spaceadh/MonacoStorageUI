@@ -1,183 +1,193 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import {
-  IconArrowLeft,
-  IconBrandTabler,
-  IconSettings,
-  IconUserBolt,
-  IconFiles,
-  IconFolder,
-  IconUpload,
-  IconShare,
-  IconShield,
-  IconKey,
-  IconCertificate,
-  IconCloudUpload,
-  IconUsers,
-} from "@tabler/icons-react";
+  LayoutDashboard,
+  Files,
+  Search,
+  CloudUpload,
+  ShieldCheck,
+  Users,
+  Key,
+  Award,
+  LogOut,
+  User,
+  MoreVertical,
+} from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { QuotaGauge } from "@/components/QuotaGauge";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const { user, logout, licenses } = useAuth();
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+
   const links = [
     {
-      label: "Dashboard",
+      label: "Overview",
       href: "/dashboard",
-      icon: (
-        <IconBrandTabler className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
+      icon: <LayoutDashboard strokeWidth={1.25} className="h-5 w-5" />,
     },
     {
-      label: "My Storage",
+      label: "Vault Archive",
       href: "/dashboard/files",
-      icon: (
-        <IconFiles className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
+      icon: <Files strokeWidth={1.25} className="h-5 w-5" />,
     },
     {
-      label: "Upload Assets",
+      label: "Analytic Search",
+      href: "/dashboard/search",
+      icon: <Search strokeWidth={1.25} className="h-5 w-5" />,
+    },
+    {
+      label: "New Deposit",
       href: "/dashboard/upload",
-      icon: (
-        <IconCloudUpload className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
+      icon: <CloudUpload strokeWidth={1.25} className="h-5 w-5" />,
     },
-    // {
-    //   label: "Settings",
-    //   href: "/dashboard/settings",
-    //   icon: (
-    //     <IconSettings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-    //   ),
-    // },
-    // Admin Section
     {
-      label: "IP Management",
+      label: "Security & IP",
       href: "/dashboard/admin/ip-management",
-      icon: (
-        <IconShield className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
+      icon: <ShieldCheck strokeWidth={1.25} className="h-5 w-5" />,
     },
     {
-      label: "User Management",
-      href: "/dashboard/admin/users",
-      icon: (
-        <IconUsers className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "API Keys",
+      label: "Key Management",
       href: "/dashboard/admin/api-keys",
-      icon: (
-        <IconKey className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
+      icon: <Key strokeWidth={1.25} className="h-5 w-5" />,
     },
     {
-      label: "License",
-      href: "/dashboard/admin/license",
-      icon: (
-        <IconCertificate className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
+      label: "Audit Logs",
+      href: "/dashboard/admin/audit-logs",
+      icon: <MoreVertical strokeWidth={1.25} className="rotate-90 h-5 w-5" />,
     },
   ];
 
-  const router = useRouter();
-
-  const { user, logout } = useAuth();
-  const [open, setOpen] = useState(false);
-
-  const handleLogout = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogout = async () => {
     await logout();
     router.push('/login');
-  }
+  };
+
+  const totalStorage = 10 * 1024 * 1024 * 1024; // 10GB demo
+  const usedStorage = 0; // This should be fetched properly, but for layout we use 0
+
   return (
-    <div
-      className={cn(
-        "rounded-md flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-900 w-full flex-1 max-w-full mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden",
-        "h-screen"
-      )}
-    >
+    <div className="flex h-screen bg-vault-bg overflow-hidden font-sans">
       <Sidebar open={open} setOpen={setOpen}>
-        <SidebarBody className="justify-between gap-10">
+        <SidebarBody className="justify-between gap-10 bg-vault-surface border-r border-vault-border">
           <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-            {open ? <Logo /> : <LogoIcon />}
-            <div className="mt-8 flex flex-col gap-2">
+            <div className="py-4">
+              {open ? <Logo /> : <LogoIcon />}
+            </div>
+            <div className="mt-12 flex flex-col gap-1">
               {links.map((link, idx) => (
-                <SidebarLink key={idx} link={link} />
+                <div key={idx} className={cn(
+                  "rounded-none transition-colors duration-300",
+                  pathname === link.href ? "bg-vault-accent/5 text-vault-accent border-r-2 border-vault-accent" : "text-vault-text-secondary hover:text-vault-text-primary"
+                )}>
+                  <SidebarLink
+                    link={link}
+                    className="px-4 py-3"
+                  />
+                </div>
               ))}
             </div>
           </div>
-          <div>
-            <button
-              onClick={handleLogout}
-              className={cn(
-                "flex items-center justify-start gap-2 group/sidebar py-2 w-full text-left"
-              )}
-            >
-              <IconArrowLeft className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-              <motion.span
-                animate={{
-                  display: open ? "inline-block" : "none",
-                  opacity: open ? 1 : 0,
-                }}
-                className="text-neutral-700 dark:text-neutral-200 text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
+
+          <div className="flex flex-col gap-8 pb-4 px-4">
+            {open && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="pt-4 border-t border-vault-border"
               >
-                Logout
-              </motion.span>
-            </button>
-            {user && (
-              <SidebarLink
-                link={{
-                  label: user.userName,
-                  href: "/dashboard/profile",
-                  icon: (
-                    <div className="h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                      {user.userName.charAt(0).toUpperCase()}
-                    </div>
-                  ),
-                }}
-              />
+                <QuotaGauge used={usedStorage} total={totalStorage} />
+              </motion.div>
             )}
+
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-1 text-vault-text-secondary hover:text-vault-accent transition-colors duration-300"
+              >
+                <LogOut strokeWidth={1.25} className="h-5 w-5" />
+                {open && <span className="text-[11px] uppercase tracking-widest font-medium">Clear Session</span>}
+              </button>
+
+              {user && (
+                <Link
+                  href="/dashboard/profile"
+                  className="flex items-center gap-3 mt-4 pt-4 border-t border-vault-border group"
+                >
+                  <div className="h-8 w-8 rounded-none bg-vault-accent text-vault-bg flex items-center justify-center text-[10px] font-bold">
+                    {user.userName.charAt(0).toUpperCase()}
+                  </div>
+                  {open && (
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="text-[12px] font-medium text-vault-text-primary truncate">{user.userName}</span>
+                      <span className="text-[9px] uppercase tracking-tighter text-vault-text-secondary truncate">Vault Admin</span>
+                    </div>
+                  )}
+                </Link>
+              )}
+            </div>
           </div>
         </SidebarBody>
       </Sidebar>
-      <div className="flex flex-1 overflow-hidden">
-        <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-2 flex-1 w-full h-full overflow-auto">
-          {children}
+
+      <main className="flex-1 overflow-hidden flex flex-col">
+        <header className="h-20 border-b border-vault-border flex items-center justify-between px-8 bg-vault-bg/80 backdrop-blur-sm z-30">
+          <div className="flex items-center gap-4">
+            <span className="text-[10px] uppercase tracking-[0.3em] text-vault-text-secondary">Monaco Vault System</span>
+            <div className="h-3 w-[1px] bg-vault-border" />
+            <span className="text-[10px] uppercase tracking-[0.3em] text-vault-text-primary font-medium">
+              {pathname === "/dashboard" ? "Main Dashboard" : pathname.split('/').pop()?.replace('-', ' ')}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+              <span className="text-[10px] uppercase tracking-widest text-vault-text-secondary">System Online</span>
+            </div>
+          </div>
+        </header>
+
+        <div className="p-8 md:p-12 overflow-y-auto flex-1 items-start">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {children}
+          </motion.div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
-export const Logo = () => {
+const Logo = () => {
   return (
-    <Link
-      href="/dashboard"
-      className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
-    >
-      <div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
-      <motion.span
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="font-bold text-black dark:text-white whitespace-pre text-xl"
-      >
-        MonacoStorage
-      </motion.span>
+    <Link href="/dashboard" className="flex items-center gap-3 px-2">
+      <div className="h-6 w-6 border-2 border-vault-accent flex items-center justify-center">
+        <div className="h-2 w-2 bg-vault-accent" />
+      </div>
+      <span className="font-serif text-xl tracking-tight text-vault-text-primary italic">
+        Monaco Vault
+      </span>
     </Link>
   );
 };
 
-export const LogoIcon = () => {
+const LogoIcon = () => {
   return (
-    <Link
-      href="/dashboard"
-      className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
-    >
-      <div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+    <Link href="/dashboard" className="flex items-center justify-center">
+      <div className="h-6 w-6 border-2 border-vault-accent flex items-center justify-center">
+        <div className="h-2 w-2 bg-vault-accent" />
+      </div>
     </Link>
   );
 };

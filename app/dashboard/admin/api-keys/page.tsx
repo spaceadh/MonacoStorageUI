@@ -4,18 +4,21 @@ import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { apiClient, ApiKey, GeneratedApiKey } from "@/lib/api";
 import {
-    IconPlus,
-    IconTrash,
-    IconCopy,
-    IconCheck,
-    IconKey,
-    IconLoader2,
-    IconRefresh,
-    IconX,
-    IconEye,
-    IconEyeOff,
-} from "@tabler/icons-react";
+    Plus,
+    Trash2,
+    Copy,
+    Check,
+    Key,
+    Loader2,
+    RefreshCw,
+    X,
+    Eye,
+    EyeOff,
+    ShieldAlert,
+    Terminal
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 export default function ApiKeysPage() {
     const { accessToken, isLoading: authLoading } = useAuth();
@@ -43,10 +46,10 @@ export default function ApiKeysPage() {
             if (result) {
                 setKeys(result.data);
             } else {
-                setError("Failed to load API keys");
+                setError("Failed to retrieve access inventory");
             }
         } catch (err) {
-            setError("Failed to load API keys");
+            setError("Failed to retrieve access inventory");
         } finally {
             setIsLoading(false);
         }
@@ -54,7 +57,7 @@ export default function ApiKeysPage() {
 
     const handleGenerateKey = async () => {
         if (!accessToken) return;
-        
+
         try {
             setIsGenerating(true);
             const result = await apiClient.generateApiKey(
@@ -68,10 +71,10 @@ export default function ApiKeysPage() {
                 setNewKey({ name: "", expiresInDays: 365 });
                 loadKeys();
             } else {
-                setError("Failed to generate API key");
+                setError("Protocol failure: Key generation rejected");
             }
         } catch (err) {
-            setError("Failed to generate API key");
+            setError("Protocol failure: Key generation rejected");
         } finally {
             setIsGenerating(false);
         }
@@ -79,14 +82,14 @@ export default function ApiKeysPage() {
 
     const handleRevokeKey = async (id: number) => {
         if (!accessToken) return;
-        if (!confirm("Are you sure you want to revoke this API key? This action cannot be undone."))
+        if (!confirm("Confirm permanent revocation of this access token? Programmatic access will be immediately terminated."))
             return;
 
         try {
             await apiClient.revokeApiKey(id, accessToken);
             loadKeys();
         } catch (err) {
-            setError("Failed to revoke API key");
+            setError("Protocol failure: Revocation denied");
         }
     };
 
@@ -96,12 +99,11 @@ export default function ApiKeysPage() {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    // Show loading while auth is initializing
     if (authLoading) {
         return (
             <DashboardLayout>
                 <div className="flex items-center justify-center h-64">
-                    <IconLoader2 className="h-8 w-8 animate-spin text-blue-500" />
+                    <Loader2 className="h-8 w-8 animate-spin text-vault-accent" strokeWidth={1} />
                 </div>
             </DashboardLayout>
         );
@@ -109,135 +111,129 @@ export default function ApiKeysPage() {
 
     return (
         <DashboardLayout>
-            <div className="space-y-6">
+            <div className="flex flex-col gap-10">
                 {/* Header */}
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-vault-border pb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">API Keys</h1>
-                        <p className="text-neutral-400 mt-1">
-                            Manage your API keys for programmatic access
+                        <h1 className="text-4xl font-serif text-vault-text-primary">Programmatic Access</h1>
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-vault-text-secondary mt-2">
+                            Secure API Authorization Management
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-4">
                         <button
                             onClick={loadKeys}
-                            className="flex items-center gap-2 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 border border-vault-border hover:border-vault-accent text-vault-text-secondary hover:text-vault-accent transition-colors"
                         >
-                            <IconRefresh className="h-4 w-4" />
-                            Refresh
+                            <RefreshCw className="h-3 w-3" strokeWidth={1.5} />
+                            <span className="text-[10px] uppercase tracking-widest font-bold">Refresh</span>
                         </button>
                         <button
                             onClick={() => setShowGenerateModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-vault-accent hover:bg-vault-text-primary text-vault-bg transition-colors"
                         >
-                            <IconPlus className="h-4 w-4" />
-                            Generate Key
+                            <Plus className="h-4 w-4" strokeWidth={2} />
+                            <span className="text-[10px] uppercase tracking-widest font-bold">Issue Token</span>
                         </button>
                     </div>
                 </div>
 
                 {/* Error Banner */}
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex justify-between items-center">
-                        <p className="text-red-400">{error}</p>
-                        <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
-                            <IconX className="h-4 w-4" />
+                    <div className="bg-red-900/10 border border-red-900/20 p-4 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <ShieldAlert className="h-4 w-4 text-red-700" />
+                            <p className="text-red-800 text-[11px] uppercase tracking-wider font-medium">{error}</p>
+                        </div>
+                        <button onClick={() => setError(null)} className="text-red-700 hover:text-red-900">
+                            <X className="h-4 w-4" />
                         </button>
                     </div>
                 )}
 
-                {/* Table */}
-                <div className="bg-neutral-800/50 border border-neutral-700 rounded-xl overflow-hidden">
+                {/* Ledger Table */}
+                <div className="border-t border-vault-border">
                     {isLoading ? (
-                        <div className="flex items-center justify-center py-12">
-                            <IconLoader2 className="h-8 w-8 text-blue-500 animate-spin" />
+                        <div className="flex items-center justify-center py-20">
+                            <Loader2 className="h-8 w-8 text-vault-accent animate-spin" strokeWidth={1} />
                         </div>
                     ) : keys.length === 0 ? (
-                        <div className="text-center py-12 text-neutral-400">
-                            No API keys found. Generate one to get started.
+                        <div className="text-center py-24">
+                            <Key className="h-10 w-10 text-vault-text-secondary/20 mx-auto mb-4" strokeWidth={0.5} />
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-vault-text-secondary">
+                                No active access tokens found in registry
+                            </p>
                         </div>
                     ) : (
-                        <table className="w-full">
-                            <thead className="bg-neutral-800">
-                                <tr>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                                        Name
-                                    </th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                                        Key Prefix
-                                    </th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                                        Expires
-                                    </th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                                        Last Used
-                                    </th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-neutral-700">
-                                {keys.map((key) => (
-                                    <tr key={key.id} className="hover:bg-neutral-800/50">
-                                        <td className="px-6 py-4 text-white font-medium">{key.name}</td>
-                                        <td className="px-6 py-4 font-mono text-neutral-300">
-                                            {key.keyPrefix}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {key.isActive ? (
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-green-500/10 text-green-400">
-                                                    <IconCheck className="h-3 w-3" /> Active
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-neutral-500/10 text-neutral-400">
-                                                    Inactive
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 text-neutral-400 text-sm">
-                                            {key.expiresAt
-                                                ? new Date(key.expiresAt).toLocaleDateString()
-                                                : "Never"}
-                                        </td>
-                                        <td className="px-6 py-4 text-neutral-400 text-sm">
-                                            {key.lastUsedAt
-                                                ? new Date(key.lastUsedAt).toLocaleDateString()
-                                                : "Never"}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <button
-                                                onClick={() => handleRevokeKey(key.id)}
-                                                className="p-2 text-neutral-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                                                title="Revoke Key"
-                                            >
-                                                <IconTrash className="h-4 w-4" />
-                                            </button>
-                                        </td>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="border-b border-vault-border">
+                                        <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Credential Name</th>
+                                        <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Token Identification</th>
+                                        <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Clearance Status</th>
+                                        <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Expiration</th>
+                                        <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Last Active</th>
+                                        <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em] text-right">Control</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-vault-border">
+                                    {keys.map((key) => (
+                                        <tr key={key.id} className="hover:bg-vault-surface transition-colors group">
+                                            <td className="px-6 py-4 font-serif text-lg text-vault-text-primary">{key.name}</td>
+                                            <td className="px-6 py-4 font-mono text-xs text-vault-text-secondary">
+                                                {key.keyPrefix}••••••••
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {key.isActive ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border border-green-900/20 text-green-700 text-[10px] uppercase tracking-tighter font-bold">
+                                                        <Check className="h-3 w-3" strokeWidth={3} /> Verified
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border border-vault-border text-vault-text-secondary text-[10px] uppercase tracking-tighter font-bold bg-vault-surface">
+                                                        Revoked
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-xs tabular-nums text-vault-text-secondary">
+                                                {key.expiresAt
+                                                    ? new Date(key.expiresAt).toLocaleDateString()
+                                                    : "Forever"}
+                                            </td>
+                                            <td className="px-6 py-4 text-xs tabular-nums text-vault-text-secondary font-medium">
+                                                {key.lastUsedAt
+                                                    ? new Date(key.lastUsedAt).toLocaleDateString()
+                                                    : "Unused"}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() => handleRevokeKey(key.id)}
+                                                    className="p-2 text-vault-text-secondary hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100"
+                                                    title="Revoke Control"
+                                                >
+                                                    <Trash2 className="h-4 w-4" strokeWidth={1.25} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </div>
 
                 {/* Generate Modal */}
                 {showGenerateModal && !generatedKey && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                        <div className="bg-neutral-800 border border-neutral-700 rounded-xl p-6 w-full max-w-md">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 bg-blue-500/10 rounded-lg">
-                                    <IconKey className="h-6 w-6 text-blue-400" />
-                                </div>
-                                <h2 className="text-xl font-bold text-white">Generate API Key</h2>
+                    <div className="fixed inset-0 bg-vault-bg/95 flex items-center justify-center z-50 backdrop-blur-sm">
+                        <div className="bg-vault-surface border border-vault-border p-10 w-full max-w-lg">
+                            <div className="flex items-center gap-4 mb-8">
+                                <Terminal className="h-6 w-6 text-vault-accent" strokeWidth={1} />
+                                <h2 className="text-3xl font-serif text-vault-text-primary">Issue New Token</h2>
                             </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-300 mb-1">
-                                        Key Name
+                            <div className="space-y-8">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] uppercase tracking-widest text-vault-text-secondary font-bold">
+                                        Credential Label
                                     </label>
                                     <input
                                         type="text"
@@ -245,13 +241,13 @@ export default function ApiKeysPage() {
                                         onChange={(e) =>
                                             setNewKey({ ...newKey, name: e.target.value })
                                         }
-                                        placeholder="e.g., Production Server"
-                                        className="w-full px-4 py-2 bg-neutral-700 border border-neutral-600 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:border-blue-500"
+                                        placeholder="e.g., Production Terminal A"
+                                        className="w-full px-4 py-4 bg-vault-bg border border-vault-border text-vault-text-primary placeholder:text-vault-text-secondary/40 focus:border-vault-accent outline-none font-serif text-lg transition-colors"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-300 mb-1">
-                                        Expires In (Days)
+                                <div className="space-y-3">
+                                    <label className="text-[10px] uppercase tracking-widest text-vault-text-secondary font-bold">
+                                        Validity Duration (Days)
                                     </label>
                                     <input
                                         type="number"
@@ -259,33 +255,32 @@ export default function ApiKeysPage() {
                                         onChange={(e) =>
                                             setNewKey({ ...newKey, expiresInDays: parseInt(e.target.value) || 0 })
                                         }
-                                        placeholder="365"
-                                        className="w-full px-4 py-2 bg-neutral-700 border border-neutral-600 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:border-blue-500"
+                                        className="w-full px-4 py-4 bg-vault-bg border border-vault-border text-vault-text-primary outline-none focus:border-vault-accent font-serif text-lg transition-colors"
                                     />
-                                    <p className="text-xs text-neutral-500 mt-1">
-                                        Set to 0 for no expiration
+                                    <p className="text-[9px] uppercase tracking-widest text-vault-text-secondary mt-1">
+                                        Protocol: 0 = Indefinite duration
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex justify-end gap-3 mt-6">
+                            <div className="flex justify-end items-center gap-6 mt-12 pt-8 border-t border-vault-border">
                                 <button
                                     onClick={() => setShowGenerateModal(false)}
-                                    className="px-4 py-2 text-neutral-300 hover:text-white transition-colors"
+                                    className="text-[11px] uppercase tracking-widest font-bold text-vault-text-secondary hover:text-vault-text-primary transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleGenerateKey}
                                     disabled={!newKey.name || isGenerating}
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-neutral-600 text-white rounded-lg transition-colors"
+                                    className="flex items-center gap-3 px-8 py-3 bg-vault-accent hover:bg-vault-text-primary disabled:opacity-30 text-vault-bg transition-colors"
                                 >
                                     {isGenerating ? (
                                         <>
-                                            <IconLoader2 className="h-4 w-4 animate-spin" />
-                                            Generating...
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <span className="text-[11px] uppercase tracking-widest font-bold">Processing...</span>
                                         </>
                                     ) : (
-                                        "Generate Key"
+                                        <span className="text-[11px] uppercase tracking-widest font-bold">Finalize Issuance</span>
                                     )}
                                 </button>
                             </div>
@@ -293,51 +288,49 @@ export default function ApiKeysPage() {
                     </div>
                 )}
 
-                {/* Generated Key Display Modal */}
+                {/* Result Modal */}
                 {generatedKey && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                        <div className="bg-neutral-800 border border-neutral-700 rounded-xl p-6 w-full max-w-lg">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 bg-green-500/10 rounded-lg">
-                                    <IconCheck className="h-6 w-6 text-green-400" />
-                                </div>
-                                <h2 className="text-xl font-bold text-white">API Key Generated</h2>
+                    <div className="fixed inset-0 bg-vault-bg/95 flex items-center justify-center z-50 backdrop-blur-sm">
+                        <div className="bg-vault-surface border border-vault-border p-10 w-full max-w-xl">
+                            <div className="flex items-center gap-4 mb-8">
+                                <Check className="h-6 w-6 text-green-700" strokeWidth={3} />
+                                <h2 className="text-3xl font-serif text-vault-text-primary">Generation Successful</h2>
                             </div>
-                            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-4">
-                                <p className="text-amber-400 text-sm">
-                                    ⚠️ Copy this key now! It will only be shown once.
+                            <div className="bg-red-900/5 border border-red-900/10 p-5 mb-8">
+                                <p className="text-red-900 text-[10px] uppercase tracking-widest font-bold leading-relaxed">
+                                    Protocol Alert: This credential will only be displayed once. Failure to secure it now requires immediate revocation and re-issuance.
                                 </p>
                             </div>
-                            <div className="bg-neutral-700/50 rounded-lg p-4 mb-4">
-                                <p className="text-xs text-neutral-400 mb-2">Your API Key</p>
-                                <div className="flex items-center gap-2">
-                                    <code className="flex-1 font-mono text-sm text-white break-all">
+                            <div className="bg-vault-bg border border-vault-border p-6 mb-8 relative group">
+                                <div className="text-[9px] uppercase tracking-widest text-vault-text-secondary mb-3">Permanent Access Token</div>
+                                <div className="flex items-center gap-6">
+                                    <code className="flex-1 font-mono text-sm text-vault-accent break-all leading-relaxed tracking-tighter">
                                         {generatedKey.apiKey}
                                     </code>
                                     <button
                                         onClick={() => copyToClipboard(generatedKey.apiKey)}
-                                        className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-600 rounded-lg transition-colors"
-                                        title="Copy to clipboard"
+                                        className="p-3 bg-vault-accent text-vault-bg hover:bg-vault-text-primary transition-all duration-300"
+                                        title="Secure to Clipboard"
                                     >
                                         {copied ? (
-                                            <IconCheck className="h-5 w-5 text-green-400" />
+                                            <Check className="h-5 w-5" strokeWidth={3} />
                                         ) : (
-                                            <IconCopy className="h-5 w-5" />
+                                            <Copy className="h-5 w-5" strokeWidth={1.5} />
                                         )}
                                     </button>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 text-sm mb-6">
+                            <div className="grid grid-cols-2 gap-8 mb-10 pt-6 border-t border-vault-border">
                                 <div>
-                                    <p className="text-neutral-400">Name</p>
-                                    <p className="text-white">{generatedKey.name}</p>
+                                    <p className="text-[9px] uppercase tracking-widest text-vault-text-secondary mb-1">Assigned Name</p>
+                                    <p className="text-vault-text-primary font-serif text-lg">{generatedKey.name}</p>
                                 </div>
                                 <div>
-                                    <p className="text-neutral-400">Expires</p>
-                                    <p className="text-white">
+                                    <p className="text-[9px] uppercase tracking-widest text-vault-text-secondary mb-1">Termination Date</p>
+                                    <p className="text-vault-text-primary font-serif text-lg">
                                         {generatedKey.expiresAt
                                             ? new Date(generatedKey.expiresAt).toLocaleDateString()
-                                            : "Never"}
+                                            : "No Expiration"}
                                     </p>
                                 </div>
                             </div>
@@ -346,9 +339,9 @@ export default function ApiKeysPage() {
                                     setGeneratedKey(null);
                                     setShowGenerateModal(false);
                                 }}
-                                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+                                className="w-full py-4 border border-vault-accent text-vault-accent hover:bg-vault-accent hover:text-vault-bg transition-all duration-300 text-[11px] uppercase tracking-widest font-bold"
                             >
-                                Done
+                                Clearance Confirmed
                             </button>
                         </div>
                     </div>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MonacoStorage | The Digital Vault</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #F8F7F4; /* Warm Ivory / Bone */
+            --color-surface: #F2EFE9; /* Oatmeal / Sand */
+            --color-text-primary: #1C1917; /* Deep Charcoal / Stone */
+            --color-text-secondary: #57534E; /* Muted Stone */
+            --color-accent: #0F172A; /* Deep Navy - Nautical Luxury */
+            --color-border: #E7E5E4;
+            --font-serif: 'Instrument Serif', serif;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: var(--color-text-primary);
+            font-family: var(--font-sans);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        /* Natural Texture Overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://www.transparenttextures.com/patterns/natural-paper.png');
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 60px;
+        }
+
+        /* Navigation */
+        nav {
+            padding: 48px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: var(--font-serif);
+            font-size: 28px;
+            letter-spacing: -0.01em;
+            font-weight: 400;
+            cursor: pointer;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 56px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--color-text-secondary);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-weight: 500;
+            transition: color 0.4s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--color-text-primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 100px 0 140px;
+            max-width: 900px;
+        }
+
+        .hero-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: var(--color-text-secondary);
+            margin-bottom: 40px;
+            display: block;
+        }
+
+        .hero h1 {
+            font-family: var(--font-serif);
+            font-size: 110px;
+            line-height: 0.95;
+            font-weight: 400;
+            margin-bottom: 48px;
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            max-width: 520px;
+            font-size: 20px;
+            line-height: 1.6;
+            color: var(--color-text-secondary);
+            font-weight: 300;
+            margin-bottom: 64px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 20px 48px;
+            background-color: var(--color-accent);
+            color: #FFFFFF;
+            text-decoration: none;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+        }
+
+        /* Section Transition */
+        .showcase {
+            height: 700px;
+            background-color: var(--color-surface);
+            margin-bottom: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .showcase-text {
+            font-family: var(--font-serif);
+            font-size: 24px;
+            color: var(--color-text-secondary);
+            font-style: italic;
+            opacity: 0.6;
+        }
+
+        /* Information Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 100px;
+            padding-bottom: 140px;
+        }
+
+        .info-card h3 {
+            font-family: var(--font-serif);
+            font-size: 32px;
+            margin-bottom: 24px;
+            font-weight: 400;
+        }
+
+        .info-card p {
+            font-size: 16px;
+            color: var(--color-text-secondary);
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        footer {
+            padding: 60px 0;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--color-text-secondary);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        @media (max-width: 1024px) {
+            .hero h1 { font-size: 80px; }
+            .info-grid { gap: 40px; }
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 0 30px; }
+            .hero h1 { font-size: 60px; }
+            .info-grid { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <nav>
+            <div class="logo">MonacoStorage</div>
+            <div class="nav-links">
+                <a href="#">The Archive</a>
+                <a href="#">Security</a>
+                <a href="#">Intelligence</a>
+                <a href="#">Login</a>
+            </div>
+        </nav>
+
+        <section class="hero">
+            <span class="hero-label">A Private Institution</span>
+            <h1>The architecture of digital silence.</h1>
+            <p>Providing the world's most discerning organizations with an immutable vault for their digital collective memory.</p>
+            <a href="#" class="cta-button">Establish Access</a>
+        </section>
+    </div>
+
+    <div class="showcase">
+        <span class="showcase-text">Impeccable Material Integrity</span>
+    </div>
+
+    <div class="container">
+        <section class="info-grid">
+            <div class="info-card">
+                <h3>Sovereign Privacy</h3>
+                <p>Private, department, and organization-level vaulting. Your data never leaves the architecture you define.</p>
+            </div>
+            <div class="info-card">
+                <h3>Quiet Intelligence</h3>
+                <p>Semantic search that understands nuance. We extract wisdom from your documents without the noise of modern AI.</p>
+            </div>
+            <div class="info-card">
+                <h3>Vault Security</h3>
+                <p>Multi-tier rate limiting, IP binding, and HMAC-SHA256 signing. Security that is felt, not seen.</p>
+            </div>
+        </section>
+
+        <footer>
+            <div>MonacoStorage &copy; 2026</div>
+            <div>A Product of ATIDI Corporation</div>
+            <div>Terms & Privacy</div>
+        </footer>
+    </div>
+
+</body>
+</html>

@@ -3,13 +3,15 @@ import React, { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import {
-    IconUpload,
-    IconFile,
-    IconCheck,
-    IconX,
-    IconLoader2,
-    IconCloudUpload
-} from "@tabler/icons-react";
+    CloudUpload,
+    File,
+    Check,
+    X,
+    Loader2,
+    Lock,
+    ShieldCheck,
+    Archive
+} from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { formatBytes } from "@/lib/utils";
 import { toast } from "sonner";
@@ -24,7 +26,7 @@ interface UploadingFile {
 }
 
 export default function UploadPage() {
-    const { accessToken } = useAuth();
+    const { accessToken, user } = useAuth();
     const [selectedFiles, setSelectedFiles] = useState<UploadingFile[]>([]);
     const [category, setCategory] = useState("Documents");
     const [isPublic, setIsPublic] = useState(false);
@@ -78,7 +80,6 @@ export default function UploadPage() {
             formData.append("category", category);
             formData.append("isPublic", String(isPublic));
 
-            // Use raw axios for progress tracking
             const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9442/api/v1'}/files/upload`, formData, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -100,35 +101,45 @@ export default function UploadPage() {
                     copy[index].status = "success";
                     return copy;
                 });
-                toast.success(`Uploaded ${fileItem.file.name}`);
+                toast.success(`Asset "${fileItem.file.name}" secured`);
             }
         } catch (error: any) {
-            console.error("Upload error:", error);
+            console.error("Deposit error:", error);
             setSelectedFiles(prev => {
                 const copy = [...prev];
                 copy[index].status = "error";
-                copy[index].error = error.response?.data?.message || "Upload failed";
+                copy[index].error = error.response?.data?.message || "Deposit rejected";
                 return copy;
             });
-            toast.error(`Failed to upload ${fileItem.file.name}`);
+            toast.error(`Failed to secure ${fileItem.file.name}`);
         }
     };
 
     return (
         <DashboardLayout>
-            <div className="max-w-4xl mx-auto flex flex-col gap-8 pb-10">
-                <div>
-                    <h1 className="text-3xl font-bold text-neutral-800 dark:text-neutral-100">Upload Assets</h1>
-                    <p className="text-neutral-500 mt-1">Add new files to your secure storage perimeter</p>
+            <div className="max-w-5xl mx-auto flex flex-col gap-12 pb-10">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-vault-border pb-6">
+                    <div>
+                        <h1 className="text-5xl font-serif text-vault-text-primary">Asset Deposit</h1>
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-vault-text-secondary mt-2">
+                            Secure ingestion into the Vault Perimeter
+                        </p>
+                    </div>
+                    <div className="hidden md:flex items-center gap-4">
+                        <div className="text-right">
+                            <p className="text-[10px] uppercase tracking-widest text-vault-text-secondary">Deposit Origin</p>
+                            <p className="text-vault-text-primary text-xs font-medium uppercase tracking-tighter">Terminal ID: {user?.id?.slice(0, 8) || "SYSTEM"}</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Upload Area */}
-                    <div className="lg:col-span-2 flex flex-col gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                    {/* Deposit Area */}
+                    <div className="lg:col-span-2 flex flex-col gap-8">
                         <div
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={onDrop}
-                            className="group relative h-64 border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-3xl flex flex-col items-center justify-center gap-4 bg-white dark:bg-neutral-800/30 hover:border-blue-500 hover:bg-blue-500/5 transition-all cursor-pointer transition-all duration-300"
+                            className="group relative h-80 border border-vault-border bg-vault-surface flex flex-col items-center justify-center gap-6 hover:border-vault-accent transition-all duration-500 cursor-pointer overflow-hidden"
                             onClick={() => document.getElementById("fileInput")?.click()}
                         >
                             <input
@@ -138,63 +149,74 @@ export default function UploadPage() {
                                 className="hidden"
                                 onChange={onFileSelect}
                             />
-                            <div className="h-20 w-20 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-                                <IconCloudUpload className="h-10 w-10" />
+
+                            {/* Vault Slot Aesthetic */}
+                            <div className="absolute top-0 left-0 w-full h-[1px] bg-vault-border group-hover:bg-vault-accent transition-colors duration-500" />
+                            <div className="absolute bottom-0 left-0 w-full h-[1px] bg-vault-border group-hover:bg-vault-accent transition-colors duration-500" />
+
+                            <div className="h-20 w-20 flex items-center justify-center text-vault-text-secondary group-hover:text-vault-accent transition-all duration-500 group-hover:scale-110">
+                                <CloudUpload strokeWidth={0.75} className="h-16 w-16" />
                             </div>
+
                             <div className="text-center">
-                                <p className="text-lg font-semibold text-neutral-800 dark:text-neutral-200">Click or drag to upload</p>
-                                <p className="text-sm text-neutral-500 mt-1">Any file types up to 100MB supported</p>
+                                <p className="font-serif text-2xl text-vault-text-primary">Release Assets for Ingestion</p>
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-vault-text-secondary mt-2">Click to browse or drag documents into slot</p>
                             </div>
                         </div>
 
-                        {/* File List */}
+                        {/* Inventory for Deposit */}
                         {selectedFiles.length > 0 && (
-                            <div className="bg-white dark:bg-neutral-800/50 rounded-2xl border border-neutral-200 dark:border-neutral-700 p-2 flex flex-col divide-y divide-neutral-100 dark:divide-neutral-700/50">
-                                {selectedFiles.map((fileItem, i) => (
-                                    <div key={i} className="p-4 flex items-center gap-4 group">
-                                        <div className="h-10 w-10 rounded-lg bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center text-neutral-500">
-                                            <IconFile className="h-6 w-6" />
+                            <div className="space-y-4">
+                                <h3 className="text-[10px] uppercase tracking-[0.2em] text-vault-text-secondary font-medium">Pending Ingestion Inventory</h3>
+                                <div className="border border-vault-border bg-vault-surface divide-y divide-vault-border">
+                                    {selectedFiles.map((fileItem, i) => (
+                                        <div key={i} className="p-4 flex items-center gap-6 group">
+                                            <div className="h-10 w-10 bg-vault-bg border border-vault-border flex items-center justify-center text-vault-text-secondary group-hover:text-vault-accent transition-colors">
+                                                <File strokeWidth={1} className="h-5 w-5" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-serif text-[15px] text-vault-text-primary truncate">{fileItem.file.name}</p>
+                                                <p className="text-[10px] uppercase tracking-wider text-vault-text-secondary">{formatBytes(fileItem.file.size)}</p>
+                                                {fileItem.status === "uploading" && (
+                                                    <div className="mt-3 h-[1px] w-full bg-vault-border relative overflow-hidden">
+                                                        <div className="absolute top-0 left-0 h-full bg-vault-accent transition-all duration-300" style={{ width: `${fileItem.progress}%` }}></div>
+                                                    </div>
+                                                )}
+                                                {fileItem.status === "error" && (
+                                                    <p className="text-[9px] uppercase tracking-tighter text-red-600 mt-1 font-medium">{fileItem.error}</p>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {fileItem.status === "success" && <Check className="h-4 w-4 text-green-600" strokeWidth={2} />}
+                                                {fileItem.status === "error" && <X className="h-4 w-4 text-red-600" strokeWidth={2} />}
+                                                {fileItem.status === "uploading" && <Loader2 className="h-4 w-4 text-vault-accent animate-spin" strokeWidth={1.5} />}
+                                                {fileItem.status === "pending" && (
+                                                    <button onClick={() => removeFile(i)} className="text-vault-text-secondary hover:text-red-600 transition-colors">
+                                                        <X className="h-4 w-4" strokeWidth={1.25} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">{fileItem.file.name}</p>
-                                            <p className="text-xs text-neutral-500">{formatBytes(fileItem.file.size)}</p>
-                                            {fileItem.status === "uploading" && (
-                                                <div className="mt-2 h-1 w-full bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${fileItem.progress}%` }}></div>
-                                                </div>
-                                            )}
-                                            {fileItem.status === "error" && (
-                                                <p className="text-[10px] text-red-500 mt-1">{fileItem.error}</p>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {fileItem.status === "success" && <IconCheck className="h-5 w-5 text-green-500" />}
-                                            {fileItem.status === "error" && <IconX className="h-5 w-5 text-red-500" />}
-                                            {fileItem.status === "uploading" && <IconLoader2 className="h-5 w-5 text-blue-500 animate-spin" />}
-                                            {fileItem.status === "pending" && (
-                                                <button onClick={() => removeFile(i)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded text-neutral-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <IconX className="h-5 w-5" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Settings Area */}
-                    <div className="flex flex-col gap-6">
-                        <div className="bg-white dark:bg-neutral-800/50 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-700/50 shadow-sm">
-                            <h3 className="text-lg font-bold text-neutral-800 dark:text-neutral-100 mb-6">Upload Settings</h3>
+                    {/* Protocol Settings */}
+                    <div className="flex flex-col gap-8">
+                        <div className="bg-vault-surface border border-vault-border p-8">
+                            <h3 className="text-[11px] uppercase tracking-[0.2em] text-vault-text-secondary font-bold mb-8 flex items-center gap-2">
+                                <Lock className="h-3 w-3" strokeWidth={2} /> Ingestion Protocol
+                            </h3>
 
-                            <div className="flex flex-col gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-neutral-500">Category</label>
+                            <div className="flex flex-col gap-6">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] uppercase tracking-widest text-vault-text-secondary font-medium">Asset Classification</label>
                                     <select
                                         value={category}
                                         onChange={(e) => setCategory(e.target.value)}
-                                        className="w-full bg-neutral-100 dark:bg-neutral-900 rounded-xl border-none focus:ring-2 focus:ring-blue-500 py-3 px-4"
+                                        className="w-full bg-vault-bg border border-vault-border text-vault-text-primary px-4 py-3 outline-none focus:border-vault-accent transition-colors font-serif text-base"
                                     >
                                         <option>Documents</option>
                                         <option>Images</option>
@@ -204,36 +226,43 @@ export default function UploadPage() {
                                     </select>
                                 </div>
 
-                                <div className="flex items-center justify-between p-4 bg-neutral-100 dark:bg-neutral-900 rounded-2xl">
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">Public Access</span>
-                                        <span className="text-[10px] text-neutral-500">Anyone with the link can view</span>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] uppercase tracking-widest text-vault-text-secondary font-medium">Visibility Clearance</label>
+                                    <div
+                                        onClick={() => setIsPublic(!isPublic)}
+                                        className="flex items-center justify-between p-4 bg-vault-bg border border-vault-border cursor-pointer group hover:border-vault-accent transition-colors"
+                                    >
+                                        <div className="flex flex-col">
+                                            <span className="text-xs uppercase tracking-wider font-medium text-vault-text-primary">Public Link</span>
+                                            <span className="text-[9px] text-vault-text-secondary uppercase tracking-tighter mt-1">External Access Enabled</span>
+                                        </div>
+                                        <div className={cn(
+                                            "h-4 w-4 border flex items-center justify-center transition-colors",
+                                            isPublic ? "bg-vault-accent border-vault-accent" : "border-vault-border"
+                                        )}>
+                                            {isPublic && <Check className="h-3 w-3 text-vault-bg" strokeWidth={3} />}
+                                        </div>
                                     </div>
-                                    <input
-                                        type="checkbox"
-                                        checked={isPublic}
-                                        onChange={(e) => setIsPublic(e.target.checked)}
-                                        className="h-5 w-5 rounded-md border-neutral-300 text-blue-600 focus:ring-blue-500"
-                                    />
                                 </div>
                             </div>
 
                             <button
                                 onClick={startUpload}
                                 disabled={selectedFiles.length === 0 || selectedFiles.every(f => f.status === "success" || f.status === "uploading")}
-                                className="w-full mt-8 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-300 dark:disabled:bg-neutral-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                                className="w-full mt-10 bg-vault-accent hover:bg-vault-text-primary text-vault-bg disabled:opacity-30 disabled:grayscale py-4 flex items-center justify-center gap-3 transition-all duration-300"
                             >
-                                <IconUpload className="h-5 w-5" /> Start Upload
+                                <Lock className="h-4 w-4" strokeWidth={1.5} />
+                                <span className="text-xs uppercase tracking-[0.2em] font-bold">Execute Deposit</span>
                             </button>
                         </div>
 
-                        <div className="bg-blue-500/5 p-6 rounded-3xl border border-blue-500/20">
-                            <h4 className="text-sm font-bold text-blue-500 mb-2 flex items-center gap-2">
-                                <IconCheck className="h-4 w-4" /> Optimization Active
+                        <div className="border border-vault-border bg-vault-accent/5 p-6 space-y-4">
+                            <h4 className="text-[10px] uppercase tracking-wider text-vault-accent font-bold flex items-center gap-2">
+                                <ShieldCheck className="h-4 w-4" strokeWidth={1.5} /> Integrity Scans Active
                             </h4>
-                            <p className="text-xs text-neutral-500 leading-relaxed">
-                                Your uploads are automatically scanned for malware and optimized for global edge delivery.
-                                Images are lazily loaded and compressed without visible quality loss.
+                            <p className="text-[11px] text-vault-text-secondary leading-relaxed font-sans uppercase tracking-tight">
+                                Every asset is processed through a zero-trust multi-engine analysis before permanent cold storage encryption.
+                                Metadata is extracted and indexed for semantic retrieval.
                             </p>
                         </div>
                     </div>

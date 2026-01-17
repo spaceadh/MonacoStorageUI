@@ -4,17 +4,21 @@ import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { apiClient, WhitelistedIP } from "@/lib/api";
 import {
-    IconPlus,
-    IconTrash,
-    IconLock,
-    IconCheck,
-    IconX,
-    IconLockOpen2,
-    IconLoader2,
-    IconRefresh,
-} from "@tabler/icons-react";
+    Plus,
+    Trash2,
+    Lock,
+    Unlock,
+    Check,
+    X,
+    Loader2,
+    RefreshCw,
+    ShieldCheck,
+    Globe,
+    ShieldAlert
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function IPManagementPage() {
     const { accessToken, isLoading: authLoading } = useAuth();
@@ -40,10 +44,10 @@ export default function IPManagementPage() {
             if (result.status && result.data) {
                 setIps(result.data);
             } else {
-                setError("Failed to load IP whitelist");
+                setError("Protocol failure: Failed to sync access perimeter");
             }
         } catch (err) {
-            setError("Failed to load IP whitelist");
+            setError("Protocol failure: Failed to sync access perimeter");
         } finally {
             setIsLoading(false);
         }
@@ -62,11 +66,12 @@ export default function IPManagementPage() {
                 setShowAddModal(false);
                 setNewIP({ ipAddress: "", description: "" });
                 loadIPs();
+                toast.success("New access origin authorized");
             } else {
-                setError("Failed to add IP");
+                setError("Authorization rejected: Invalid origin parameters");
             }
         } catch (err) {
-            setError("Failed to add IP");
+            setError("Authorization rejected: Invalid origin parameters");
         } finally {
             setIsAdding(false);
         }
@@ -74,41 +79,40 @@ export default function IPManagementPage() {
 
     const handleDeleteIP = async (id: number) => {
         if (!accessToken) return;
-        if (!confirm("Are you sure you want to remove this IP from the whitelist?"))
+        if (!confirm("Confirm permanent removal of this access origin? Vault access from this location will be immediately blocked."))
             return;
 
         try {
             await apiClient.deleteWhitelistedIP(id, accessToken);
             loadIPs();
+            toast.success("Access origin decommissioned");
         } catch (err) {
-            setError("Failed to delete IP");
+            setError("Protocol failure: Decommission denied");
         }
     };
 
-    const handleLockingIP = async (id: number,type: string) => {
+    const handleLockingIP = async (id: number, type: string) => {
         if (!accessToken) return;
         try {
             let response;
-            // If locked, then unlock.
-            if(type === "locked"){
-              response = await apiClient.unLockWhitelistedIP(id, accessToken);
-              toast.success(response.message);
-            }else if (type === "unlocked"){
-              response = await apiClient.lockWhitelistedIP(id, accessToken);
-              toast.success(response.message);
+            if (type === "locked") {
+                response = await apiClient.unLockWhitelistedIP(id, accessToken);
+                toast.success("Origin lock released");
+            } else if (type === "unlocked") {
+                response = await apiClient.lockWhitelistedIP(id, accessToken);
+                toast.success("Origin lock engaged");
             }
             loadIPs();
         } catch (err) {
-            setError("Failed to lock IP");
+            setError("Protocol failure: Lock state mutation failed");
         }
     };
 
-    // Show loading while auth is initializing
     if (authLoading) {
         return (
             <DashboardLayout>
                 <div className="flex items-center justify-center h-64">
-                    <IconLoader2 className="h-8 w-8 animate-spin text-blue-500" />
+                    <Loader2 className="h-8 w-8 animate-spin text-vault-accent" strokeWidth={1} />
                 </div>
             </DashboardLayout>
         );
@@ -116,144 +120,143 @@ export default function IPManagementPage() {
 
     return (
         <DashboardLayout>
-            <div className="space-y-6">
+            <div className="flex flex-col gap-10">
                 {/* Header */}
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-vault-border pb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">IP Management</h1>
-                        <p className="text-neutral-400 mt-1">
-                            Manage whitelisted IP addresses for system access
+                        <h1 className="text-4xl font-serif text-vault-text-primary">Network Perimeter</h1>
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-vault-text-secondary mt-2">
+                            Authorized Access Origins & Location Control
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-4">
                         <button
                             onClick={loadIPs}
-                            className="flex items-center gap-2 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 border border-vault-border hover:border-vault-accent text-vault-text-secondary hover:text-vault-accent transition-colors"
                         >
-                            <IconRefresh className="h-4 w-4" />
-                            Refresh
+                            <RefreshCw className="h-3 w-3" strokeWidth={1.5} />
+                            <span className="text-[10px] uppercase tracking-widest font-bold">Resync</span>
                         </button>
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-vault-accent hover:bg-vault-text-primary text-vault-bg transition-colors"
                         >
-                            <IconPlus className="h-4 w-4" />
-                            Add IP
+                            <Plus className="h-4 w-4" strokeWidth={2} />
+                            <span className="text-[10px] uppercase tracking-widest font-bold">Authorize Origin</span>
                         </button>
                     </div>
                 </div>
 
                 {/* Error Banner */}
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex justify-between items-center">
-                        <p className="text-red-400">{error}</p>
-                        <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
-                            <IconX className="h-4 w-4" />
+                    <div className="bg-red-900/10 border border-red-900/20 p-4 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <ShieldAlert className="h-4 w-4 text-red-700" />
+                            <p className="text-red-800 text-[11px] uppercase tracking-wider font-medium">{error}</p>
+                        </div>
+                        <button onClick={() => setError(null)} className="text-red-700 hover:text-red-900">
+                            <X className="h-4 w-4" />
                         </button>
                     </div>
                 )}
 
-                {/* Table */}
-                <div className="bg-neutral-800/50 border border-neutral-700 rounded-xl overflow-hidden">
+                {/* Ledger Table */}
+                <div className="border-t border-vault-border">
                     {isLoading ? (
-                        <div className="flex items-center justify-center py-12">
-                            <IconLoader2 className="h-8 w-8 text-blue-500 animate-spin" />
+                        <div className="flex items-center justify-center py-20">
+                            <Loader2 className="h-8 w-8 text-vault-accent animate-spin" strokeWidth={1} />
                         </div>
                     ) : ips.length === 0 ? (
-                        <div className="text-center py-12 text-neutral-400">
-                            No whitelisted IPs found. Add one to get started.
+                        <div className="text-center py-24">
+                            <Globe className="h-10 w-10 text-vault-text-secondary/20 mx-auto mb-4" strokeWidth={0.5} />
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-vault-text-secondary">
+                                No perimeter origins currently authorized
+                            </p>
                         </div>
                     ) : (
-                        <table className="w-full">
-                            <thead className="bg-neutral-800">
-                                <tr>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                                        IP Address
-                                    </th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                                        Description
-                                    </th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                                        Added
-                                    </th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-neutral-700">
-                                {ips.map((ip) => (
-                                    <tr key={ip.id} className="hover:bg-neutral-800/50">
-                                        <td className="px-6 py-4 whitespace-nowrap font-mono text-white">
-                                            {ip.ipAddress}
-                                        </td>
-                                        <td className="px-6 py-4 text-neutral-300">
-                                            {ip.description || "-"}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex gap-2">
-                                                {ip.isActive ? (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-green-500/10 text-green-400">
-                                                        <IconCheck className="h-3 w-3" /> Active
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-neutral-500/10 text-neutral-400">
-                                                        Inactive
-                                                    </span>
-                                                )}
-                                                {ip.isLocked ? (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-amber-500/10 text-amber-400">
-                                                        <IconLock className="h-3 w-3" /> Locked
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-500/10 text-blue-400">
-                                                        <IconLockOpen2 className="h-3 w-3" /> Unlocked
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-neutral-400 text-sm">
-                                            {new Date(ip.addedAt).toLocaleDateString()}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleLockingIP(ip.id, ip.isLocked ? "locked" : "unlocked")}
-                                                    className="p-2 text-neutral-400 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-colors"
-                                                    title={ip.isLocked ? "UnLock IP" : "Lock IP"}
-                                                >
-                                                    {ip.isLocked ? <IconLockOpen2 className="h-4 w-4" /> : <IconLock className="h-4 w-4" />}
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteIP(ip.id)}
-                                                    className="p-2 text-neutral-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                                                    title="Delete IP"
-                                                >
-                                                    <IconTrash className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        </td>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="border-b border-vault-border">
+                                        <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Network Address (IPv4/6)</th>
+                                        <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Origin Identifier</th>
+                                        <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Clearance & Lock Protocol</th>
+                                        <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Authorization Date</th>
+                                        <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em] text-right">Perimeter Controls</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-vault-border">
+                                    {ips.map((ip) => (
+                                        <tr key={ip.id} className="hover:bg-vault-surface transition-colors group">
+                                            <td className="px-6 py-4 font-mono text-sm text-vault-accent font-bold tracking-tight">
+                                                {ip.ipAddress}
+                                            </td>
+                                            <td className="px-6 py-4 font-serif text-lg text-vault-text-primary">
+                                                {ip.description || "Unlabeled Origin"}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex gap-3">
+                                                    {ip.isActive ? (
+                                                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border border-green-900/20 text-green-700 text-[10px] uppercase tracking-tighter font-bold">
+                                                            <Check className="h-3 w-3" strokeWidth={1} /> Active
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border border-vault-border text-vault-text-secondary text-[10px] uppercase tracking-tighter font-bold bg-vault-surface">
+                                                            Disabled
+                                                        </span>
+                                                    )}
+                                                    {ip.isLocked ? (
+                                                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-vault-text-primary text-vault-bg text-[10px] uppercase tracking-tighter font-bold">
+                                                            <Lock className="h-3 w-3" strokeWidth={1} /> Locked
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border border-vault-accent text-vault-accent text-[10px] uppercase tracking-tighter font-bold">
+                                                            <Unlock className="h-3 w-3" strokeWidth={1.5} /> Open
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-xs tabular-nums text-vault-text-secondary font-medium">
+                                                {new Date(ip.addedAt).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex gap-2 justify-end">
+                                                    <button
+                                                        onClick={() => handleLockingIP(ip.id, ip.isLocked ? "locked" : "unlocked")}
+                                                        className="p-2 text-vault-text-secondary hover:text-vault-accent transition-colors opacity-0 group-hover:opacity-100"
+                                                        title={ip.isLocked ? "Release State Lock" : "Engage State Lock"}
+                                                    >
+                                                        {ip.isLocked ? <Unlock className="h-4 w-4" strokeWidth={1.25} /> : <Lock className="h-4 w-4" strokeWidth={1.25} />}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteIP(ip.id)}
+                                                        className="p-2 text-vault-text-secondary hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100"
+                                                        title="Decommission Origin"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" strokeWidth={1.25} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </div>
 
-                {/* Add Modal */}
+                {/* Authorize Modal */}
                 {showAddModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                        <div className="bg-neutral-800 border border-neutral-700 rounded-xl p-6 w-full max-w-md">
-                            <h2 className="text-xl font-bold text-white mb-4">
-                                Add IP to Whitelist
-                            </h2>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-300 mb-1">
-                                        IP Address
+                    <div className="fixed inset-0 bg-vault-bg/95 flex items-center justify-center z-50 backdrop-blur-sm">
+                        <div className="bg-vault-surface border border-vault-border p-10 w-full max-w-lg">
+                            <div className="flex items-center gap-4 mb-8">
+                                <ShieldCheck className="h-6 w-6 text-vault-accent" strokeWidth={1} />
+                                <h2 className="text-3xl font-serif text-vault-text-primary">Authorize Origin</h2>
+                            </div>
+                            <div className="space-y-8">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] uppercase tracking-widest text-vault-text-secondary font-bold">
+                                        IPv4 or IPv6 Address
                                     </label>
                                     <input
                                         type="text"
@@ -261,13 +264,13 @@ export default function IPManagementPage() {
                                         onChange={(e) =>
                                             setNewIP({ ...newIP, ipAddress: e.target.value })
                                         }
-                                        placeholder="e.g., 192.168.1.100"
-                                        className="w-full px-4 py-2 bg-neutral-700 border border-neutral-600 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:border-blue-500"
+                                        placeholder="e.g., 127.0.0.1"
+                                        className="w-full px-4 py-4 bg-vault-bg border border-vault-border text-vault-text-primary placeholder:text-vault-text-secondary/40 focus:border-vault-accent outline-none font-mono text-lg transition-colors"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-300 mb-1">
-                                        Description (Optional)
+                                <div className="space-y-3">
+                                    <label className="text-[10px] uppercase tracking-widest text-vault-text-secondary font-bold">
+                                        Origin Description
                                     </label>
                                     <input
                                         type="text"
@@ -275,30 +278,30 @@ export default function IPManagementPage() {
                                         onChange={(e) =>
                                             setNewIP({ ...newIP, description: e.target.value })
                                         }
-                                        placeholder="e.g., Office Network"
-                                        className="w-full px-4 py-2 bg-neutral-700 border border-neutral-600 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:border-blue-500"
+                                        placeholder="e.g., Primary Residence"
+                                        className="w-full px-4 py-4 bg-vault-bg border border-vault-border text-vault-text-primary placeholder:text-vault-text-secondary/40 focus:border-vault-accent outline-none font-serif text-lg transition-colors"
                                     />
                                 </div>
                             </div>
-                            <div className="flex justify-end gap-3 mt-6">
+                            <div className="flex justify-end items-center gap-6 mt-12 pt-8 border-t border-vault-border">
                                 <button
                                     onClick={() => setShowAddModal(false)}
-                                    className="px-4 py-2 text-neutral-300 hover:text-white transition-colors"
+                                    className="text-[11px] uppercase tracking-widest font-bold text-vault-text-secondary hover:text-vault-text-primary transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleAddIP}
                                     disabled={!newIP.ipAddress || isAdding}
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-neutral-600 text-white rounded-lg transition-colors"
+                                    className="flex items-center gap-3 px-8 py-3 bg-vault-accent hover:bg-vault-text-primary disabled:opacity-30 text-vault-bg transition-colors"
                                 >
                                     {isAdding ? (
                                         <>
-                                            <IconLoader2 className="h-4 w-4 animate-spin" />
-                                            Adding...
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <span className="text-[11px] uppercase tracking-widest font-bold">Validating...</span>
                                         </>
                                     ) : (
-                                        "Add IP"
+                                        <span className="text-[11px] uppercase tracking-widest font-bold">Confirm Origin</span>
                                     )}
                                 </button>
                             </div>

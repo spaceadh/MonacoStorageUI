@@ -4,14 +4,20 @@ import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { apiClient, LicenseInfo, LicenseValidation } from "@/lib/api";
 import {
-    IconLicense,
-    IconRefresh,
-    IconCheck,
-    IconAlertTriangle,
-    IconX,
-    IconLoader2,
-} from "@tabler/icons-react";
+    ShieldCheck,
+    RefreshCw,
+    Check,
+    AlertTriangle,
+    X,
+    Loader2,
+    Key,
+    Calendar,
+    Hourglass,
+    Activity,
+    ShieldAlert
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 export default function LicensePage() {
     const { accessToken, isLoading: authLoading } = useAuth();
@@ -39,10 +45,10 @@ export default function LicensePage() {
             if (result.status && result.data) {
                 setLicense(result.data);
             } else {
-                setError("Failed to load license info");
+                setError("Protocol failure: Failed to fetch registry entitlement info");
             }
         } catch (err) {
-            setError("Failed to load license info");
+            setError("Protocol failure: Failed to fetch registry entitlement info");
         } finally {
             setIsLoading(false);
         }
@@ -58,10 +64,10 @@ export default function LicensePage() {
                 setValidationResult(result);
                 loadLicense(); // Refresh license info after validation
             } else {
-                setError("Failed to validate license");
+                setError("Protocol failure: Entitlement attestation failed");
             }
         } catch (err) {
-            setError("Failed to validate license");
+            setError("Protocol failure: Entitlement attestation failed");
         } finally {
             setIsValidating(false);
         }
@@ -76,9 +82,9 @@ export default function LicensePage() {
                 setShowRenewModal(false);
                 setNewLicenseKey("");
                 loadLicense();
-            } 
+            }
         } catch (err) {
-            setError("Failed to renew license");
+            setError("Protocol failure: Entitlement affirmation failed");
         } finally {
             setIsRenewing(false);
         }
@@ -91,12 +97,11 @@ export default function LicensePage() {
         return "green";
     };
 
-    // Show loading while auth is initializing
     if (authLoading) {
         return (
             <DashboardLayout>
                 <div className="flex items-center justify-center h-64">
-                    <IconLoader2 className="h-8 w-8 animate-spin text-blue-500" />
+                    <Loader2 className="h-8 w-8 animate-spin text-vault-accent" strokeWidth={1} />
                 </div>
             </DashboardLayout>
         );
@@ -104,205 +109,239 @@ export default function LicensePage() {
 
     return (
         <DashboardLayout>
-            <div className="space-y-6">
+            <div className="flex flex-col gap-10">
                 {/* Header */}
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-vault-border pb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">License Management</h1>
-                        <p className="text-neutral-400 mt-1">
-                            View and manage your MonacoStorage license
+                        <h1 className="text-4xl font-serif text-vault-text-primary">Registry Entitlement</h1>
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-vault-text-secondary mt-2">
+                            Infrastructure Validity & Domain Authorization
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-4">
                         <button
                             onClick={handleValidate}
                             disabled={isValidating}
-                            className="flex items-center gap-2 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 disabled:bg-neutral-800 text-white rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 border border-vault-border hover:border-vault-accent text-vault-text-secondary hover:text-vault-accent disabled:opacity-30 transition-colors"
                         >
                             {isValidating ? (
-                                <IconLoader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="h-3 w-3 animate-spin" />
                             ) : (
-                                <IconRefresh className="h-4 w-4" />
+                                <RefreshCw className="h-3 w-3" strokeWidth={1.5} />
                             )}
-                            Validate
+                            <span className="text-[10px] uppercase tracking-widest font-bold">Attest State</span>
                         </button>
                         <button
                             onClick={() => setShowRenewModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-vault-accent hover:bg-vault-text-primary text-vault-bg transition-colors"
                         >
-                            <IconLicense className="h-4 w-4" />
-                            Renew License
+                            <ShieldCheck className="h-4 w-4" strokeWidth={2} />
+                            <span className="text-[10px] uppercase tracking-widest font-bold">Affirm Entitlement</span>
                         </button>
                     </div>
                 </div>
 
-                {/* Error Banner */}
-                {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex justify-between items-center">
-                        <p className="text-red-400">{error}</p>
-                        <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
-                            <IconX className="h-4 w-4" />
-                        </button>
-                    </div>
-                )}
-
-                {/* Validation Result */}
-                {validationResult && (
-                    <div
-                        className={`border rounded-lg p-4 ${validationResult.isValid
-                                ? "bg-green-500/10 border-green-500/20"
-                                : "bg-red-500/10 border-red-500/20"
-                            }`}
-                    >
-                        <div className="flex items-center gap-2">
-                            {validationResult.isValid ? (
-                                <IconCheck className="h-5 w-5 text-green-400" />
-                            ) : (
-                                <IconAlertTriangle className="h-5 w-5 text-red-400" />
-                            )}
-                            <p className={validationResult.isValid ? "text-green-400" : "text-red-400"}>
-                                {validationResult.message}
-                            </p>
+                {/* Status Banners */}
+                <div className="flex flex-col gap-4">
+                    {error && (
+                        <div className="bg-red-900/10 border border-red-900/20 p-4 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <ShieldAlert className="h-4 w-4 text-red-700" />
+                                <p className="text-red-800 text-[11px] uppercase tracking-wider font-medium">{error}</p>
+                            </div>
+                            <button onClick={() => setError(null)} className="text-red-700 hover:text-red-900">
+                                <X className="h-4 w-4" />
+                            </button>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* License Card */}
+                    {validationResult && (
+                        <div
+                            className={cn(
+                                "p-4 border",
+                                validationResult.isValid
+                                    ? "bg-green-900/5 border-green-900/20"
+                                    : "bg-red-900/5 border-red-900/20"
+                            )}
+                        >
+                            <div className="flex items-center gap-3">
+                                {validationResult.isValid ? (
+                                    <Check className="h-4 w-4 text-green-700" />
+                                ) : (
+                                    <AlertTriangle className="h-4 w-4 text-red-700" />
+                                )}
+                                <p className={cn(
+                                    "text-[11px] uppercase tracking-wider font-bold",
+                                    validationResult.isValid ? "text-green-800" : "text-red-800"
+                                )}>
+                                    {validationResult.message}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Entitlement Details */}
                 {isLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <IconLoader2 className="h-8 w-8 text-blue-500 animate-spin" />
+                    <div className="flex items-center justify-center py-24">
+                        <Loader2 className="h-8 w-8 text-vault-accent animate-spin" strokeWidth={1} />
                     </div>
                 ) : license ? (
-                    <div className="bg-neutral-800/50 border border-neutral-700 rounded-xl p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="flex flex-col gap-10">
+                        {/* Grid of details */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-vault-border border border-vault-border">
                             {/* License Key */}
-                            <div>
-                                <p className="text-sm text-neutral-400 mb-1">License Key</p>
-                                <p className="text-lg text-neutral-400 mb-1">{license.licenseKey}</p>
+                            <div className="bg-vault-surface p-8 flex flex-col gap-3">
+                                <div className="flex items-center gap-2 text-vault-text-secondary">
+                                    <Key className="h-3.5 w-3.5" strokeWidth={1} />
+                                    <p className="text-[10px] uppercase tracking-[0.2em] font-medium">Entitlement Token</p>
+                                </div>
+                                <p className="text-sm font-mono text-vault-accent font-bold tracking-wider break-all">
+                                    {license.licenseKey}
+                                </p>
                             </div>
 
                             {/* Status */}
-                            <div>
-                                <p className="text-sm text-neutral-400 mb-1">Status</p>
-                                <span
-                                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${getStatusColor() === "green"
-                                            ? "bg-green-500/10 text-green-400"
-                                            : getStatusColor() === "amber"
-                                                ? "bg-amber-500/10 text-amber-400"
-                                                : "bg-red-500/10 text-red-400"
-                                        }`}
-                                >
-                                    {license.isValid ? (
-                                        <>
-                                            <IconCheck className="h-4 w-4" />
-                                            Active
-                                        </>
-                                    ) : (
-                                        <>
-                                            <IconAlertTriangle className="h-4 w-4" />
-                                            Expired
-                                        </>
-                                    )}
-                                </span>
+                            <div className="bg-vault-surface p-8 flex flex-col gap-3">
+                                <div className="flex items-center gap-2 text-vault-text-secondary">
+                                    <Activity className="h-3.5 w-3.5" strokeWidth={1} />
+                                    <p className="text-[10px] uppercase tracking-[0.2em] font-medium">Clearance Status</p>
+                                </div>
+                                <div>
+                                    <span
+                                        className={cn(
+                                            "inline-flex items-center gap-2 px-3 py-0.5 text-[11px] font-bold uppercase tracking-widest bg-vault-bg border",
+                                            license.isValid
+                                                ? "text-green-700 border-green-900/20"
+                                                : "text-red-700 border-red-900/20"
+                                        )}
+                                    >
+                                        {license.isValid ? "Authorized State" : "Expunged State"}
+                                    </span>
+                                </div>
                             </div>
 
                             {/* Expiry Date */}
-                            <div>
-                                <p className="text-sm text-neutral-400 mb-1">Expiry Date</p>
-                                <p className="text-lg text-white">
-                                    {new Date(license.expiryDate).toLocaleDateString()}
+                            <div className="bg-vault-surface p-8 flex flex-col gap-3">
+                                <div className="flex items-center gap-2 text-vault-text-secondary">
+                                    <Calendar className="h-3.5 w-3.5" strokeWidth={1} />
+                                    <p className="text-[10px] uppercase tracking-[0.2em] font-medium">Term Expiration</p>
+                                </div>
+                                <p className="text-xl font-serif text-vault-text-primary">
+                                    {new Date(license.expiryDate).toLocaleDateString(undefined, {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    })}
                                 </p>
                             </div>
 
                             {/* Days Remaining */}
-                            <div>
-                                <p className="text-sm text-neutral-400 mb-1">Days Remaining</p>
-                                <p
-                                    className={`text-2xl font-bold ${getStatusColor() === "green"
-                                            ? "text-green-400"
-                                            : getStatusColor() === "amber"
-                                                ? "text-amber-400"
-                                                : "text-red-400"
-                                        }`}
-                                >
-                                    {license.daysRemaining > 0 ? license.daysRemaining : 0}
-                                </p>
+                            <div className="bg-vault-surface p-8 flex flex-col gap-3">
+                                <div className="flex items-center gap-2 text-vault-text-secondary">
+                                    <Hourglass className="h-3.5 w-3.5" strokeWidth={1} />
+                                    <p className="text-[10px] uppercase tracking-[0.2em] font-medium">Authorization Reserve</p>
+                                </div>
+                                <div className="flex items-end gap-2">
+                                    <p className={cn(
+                                        "text-4xl font-serif leading-none",
+                                        getStatusColor() === "green" ? "text-green-700" :
+                                            getStatusColor() === "amber" ? "text-amber-700" : "text-red-700"
+                                    )}>
+                                        {license.daysRemaining > 0 ? license.daysRemaining : 0}
+                                    </p>
+                                    <p className="text-[10px] uppercase tracking-widest text-vault-text-secondary pb-1 font-bold">Standard Days</p>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Progress Bar */}
-                        <div className="mt-6">
-                            <div className="flex justify-between text-sm text-neutral-400 mb-2">
-                                <span>License Usage</span>
-                                <span>{license.daysRemaining} days remaining</span>
+                        {/* Entitlement Indicator */}
+                        <div className="flex flex-col gap-6 p-8 border border-vault-border bg-vault-surface">
+                            <div className="flex justify-between items-end">
+                                <div>
+                                    <p className="text-[10px] uppercase tracking-widest text-vault-text-secondary font-bold mb-1">Entitlement Lifespan Indicator</p>
+                                    <p className="text-2xl font-serif text-vault-text-primary italic opacity-60">Status: {license.isValid ? "Standing Reserve" : "Immediate Renewal Required"}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] uppercase tracking-widest text-vault-text-secondary font-bold mb-1">Reserve Balance</p>
+                                    <p className="text-lg tabular-nums text-vault-accent font-bold tracking-tight">{license.daysRemaining}d / 365d</p>
+                                </div>
                             </div>
-                            <div className="h-2 bg-neutral-700 rounded-full overflow-hidden">
+
+                            <div className="h-1.5 w-full bg-vault-bg border border-vault-border p-0.5 overflow-hidden">
                                 <div
-                                    className={`h-full transition-all duration-500 ${getStatusColor() === "green"
-                                            ? "bg-green-500"
-                                            : getStatusColor() === "amber"
-                                                ? "bg-amber-500"
-                                                : "bg-red-500"
-                                        }`}
+                                    className={cn(
+                                        "h-full transition-all duration-1000 ease-out",
+                                        getStatusColor() === "green" ? "bg-green-700" :
+                                            getStatusColor() === "amber" ? "bg-amber-700" : "bg-red-700"
+                                    )}
                                     style={{ width: `${Math.min((license.daysRemaining / 365) * 100, 100)}%` }}
                                 />
                             </div>
-                        </div>
 
-                        {/* Warning */}
-                        {license.daysRemaining <= 30 && license.daysRemaining > 0 && (
-                            <div className="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
-                                <div className="flex items-center gap-2">
-                                    <IconAlertTriangle className="h-5 w-5 text-amber-400" />
-                                    <p className="text-amber-400">
-                                        Your license expires in {license.daysRemaining} days. Please renew soon.
+                            {license.daysRemaining <= 30 && license.daysRemaining > 0 && (
+                                <div className="flex items-center gap-4 py-4 px-6 bg-amber-900/5 border border-amber-900/20 text-amber-800">
+                                    <AlertTriangle className="h-5 w-5" strokeWidth={1.5} />
+                                    <p className="text-[11px] uppercase tracking-widest font-bold">
+                                        Perimeter Alert: Authorization reserve is critical. Immediate affirmation required within {license.daysRemaining} days.
                                     </p>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 ) : (
-                    <div className="bg-neutral-800/50 border border-neutral-700 rounded-xl p-12 text-center">
-                        <p className="text-neutral-400">No license found. Please complete setup.</p>
+                    <div className="border border-vault-border bg-vault-surface py-32 text-center">
+                        <ShieldAlert className="h-12 w-12 text-vault-text-secondary/20 mx-auto mb-6" strokeWidth={0.5} />
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-vault-text-secondary">
+                            No authorized entitlement record detected in the vault registry
+                        </p>
                     </div>
                 )}
 
-                {/* Renew Modal */}
+                {/* Affirm Modal */}
                 {showRenewModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                        <div className="bg-neutral-800 border border-neutral-700 rounded-xl p-6 w-full max-w-md">
-                            <h2 className="text-xl font-bold text-white mb-4">Renew License</h2>
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-300 mb-1">
-                                    New License Key
-                                </label>
-                                <input
-                                    type="text"
-                                    value={newLicenseKey}
-                                    onChange={(e) => setNewLicenseKey(e.target.value)}
-                                    placeholder="Enter your new license key"
-                                    className="w-full px-4 py-2 bg-neutral-700 border border-neutral-600 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:border-blue-500"
-                                />
+                    <div className="fixed inset-0 bg-vault-bg/95 flex items-center justify-center z-50 backdrop-blur-sm">
+                        <div className="bg-vault-surface border border-vault-border p-10 w-full max-w-lg">
+                            <div className="flex items-center gap-4 mb-8">
+                                <ShieldCheck className="h-6 w-6 text-vault-accent" strokeWidth={1} />
+                                <h2 className="text-3xl font-serif text-vault-text-primary">Affirm Entitlement</h2>
                             </div>
-                            <div className="flex justify-end gap-3 mt-6">
+                            <div className="space-y-8">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] uppercase tracking-widest text-vault-text-secondary font-bold">
+                                        Entitlement Token Key
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={newLicenseKey}
+                                        onChange={(e) => setNewLicenseKey(e.target.value)}
+                                        placeholder="X-XXXX-XXXX-XXXX"
+                                        className="w-full px-4 py-4 bg-vault-bg border border-vault-border text-vault-text-primary placeholder:text-vault-text-secondary/40 focus:border-vault-accent outline-none font-mono text-lg transition-colors"
+                                    />
+                                </div>
+                                <p className="text-[10px] text-vault-text-secondary leading-relaxed uppercase tracking-widest font-medium">
+                                    By affirming this entitlement, you provide attestation of continuous domain stewardship and adherence to the vault infrastructure protocol.
+                                </p>
+                            </div>
+                            <div className="flex justify-end items-center gap-6 mt-12 pt-8 border-t border-vault-border">
                                 <button
                                     onClick={() => setShowRenewModal(false)}
-                                    className="px-4 py-2 text-neutral-300 hover:text-white transition-colors"
+                                    className="text-[11px] uppercase tracking-widest font-bold text-vault-text-secondary hover:text-vault-text-primary transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleRenew}
                                     disabled={!newLicenseKey || isRenewing}
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-neutral-600 text-white rounded-lg transition-colors"
+                                    className="flex items-center gap-3 px-8 py-3 bg-vault-accent hover:bg-vault-text-primary disabled:opacity-30 text-vault-bg transition-colors"
                                 >
                                     {isRenewing ? (
                                         <>
-                                            <IconLoader2 className="h-4 w-4 animate-spin" />
-                                            Renewing...
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <span className="text-[11px] uppercase tracking-widest font-bold">Validating...</span>
                                         </>
                                     ) : (
-                                        "Renew License"
+                                        <span className="text-[11px] uppercase tracking-widest font-bold">Affirm Registry</span>
                                     )}
                                 </button>
                             </div>

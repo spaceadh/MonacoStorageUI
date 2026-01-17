@@ -171,10 +171,16 @@ class ApiClient {
   }
 
   async deleteFile(fileId: string, token: string) {
-    // This endpoint isn't explicitly mentioned in the previous turn of FileUploadController but usually exists
-    // Looking back at FileUploadController, I don't see a DELETE mapping. 
-    // I'll stick to what I saw in FileUploadController.
     return this.delete<void>(`/files/${fileId}`, token);
+  }
+
+  // Audit & Search (Phase 5)
+  async getAuditLogs(token: string) {
+    return this.get<AuditLogResponse>('/audit/logs', token);
+  }
+
+  async semanticSearch(query: string, token: string) {
+    return this.post<SemanticSearchResponse>('/files/search/semantic', { query }, token);
   }
 }
 
@@ -349,6 +355,31 @@ export interface ShareFileResponse {
   fileId: string;
   shareUrl: string;
   expiryHours: number;
+}
+
+export interface AuditEntry {
+  id: string;
+  timestamp: string;
+  actor: string;
+  operation: string;
+  resource: string;
+  status: 'SUCCESS' | 'FAILURE' | 'WARNING';
+  details?: string;
+}
+
+export interface AuditLogResponse {
+  logs: AuditEntry[];
+  total: number;
+}
+
+export interface SemanticSearchResult {
+  file: FileMeta;
+  relevanceScore: number;
+  reason: string;
+}
+
+export interface SemanticSearchResponse {
+  results: SemanticSearchResult[];
 }
 
 export const apiClient = new ApiClient();

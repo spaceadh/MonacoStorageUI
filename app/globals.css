@@ -1,7 +1,75 @@
 @import "tailwindcss";
 
+@theme {
+  --font-serif: "Instrument Serif", serif;
+  --font-sans: "Inter", sans-serif;
+
+  --color-vault-bg: var(--vault-bg);
+  --color-vault-surface: var(--vault-surface);
+  --color-vault-text-primary: var(--vault-text-primary);
+  --color-vault-text-secondary: var(--vault-text-secondary);
+  --color-vault-border: var(--vault-border);
+  --color-vault-accent: var(--vault-accent);
+}
+
+:root {
+  /* Light Mode - Standard Luxury (Adjusted for higher contrast) */
+  --vault-bg: #EAE8E3;
+  /* Darker Bone/Oatmeal hybrid */
+  --vault-surface: #F2EFE9;
+  /* Kept light for elevation contrast */
+  --vault-text-primary: #111827;
+  /* Near black instead of dark grey */
+  --vault-text-secondary: #4B5563;
+  /* Darker grey for better readability */
+  --vault-border: #D1D5DB;
+  /* Slightly stronger border */
+  --vault-accent: #0F172A;
+}
+
+[class~="dark"] {
+  /* Dark Mode - Obsidian Luxury */
+  --vault-bg: #0A0A0A;
+  --vault-surface: #121212;
+  --vault-text-primary: #F8F7F4;
+  --vault-text-secondary: #A8A29E;
+  --vault-border: #262626;
+  --vault-accent: #FFFFFF;
+}
+
 @layer base {
   body {
-    @apply bg-neutral-900 text-neutral-100;
+    background-color: var(--vault-bg);
+    color: var(--vault-text-primary);
+    font-family: var(--font-sans);
+    transition: background-color 0.5s ease, color 0.5s ease;
   }
+
+  /* Natural Texture Overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('https://www.transparenttextures.com/patterns/natural-paper.png');
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 9999;
+  }
+}
+
+@keyframes scan {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+.animate-scan {
+  animation: scan 2s ease-in-out infinite;
 }

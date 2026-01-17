@@ -2,101 +2,115 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { BackgroundGradient } from "@/components/ui/background-gradient";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const { login, isLoading } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
-
     try {
       await login(email, password);
       router.push("/dashboard");
     } catch (err) {
-      setError("Failed to login. Please try again.");
+      // Errors are handled by the toast in AuthContext
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 p-4">
-      <BackgroundGradient className="rounded-[22px] max-w-md w-full p-8 bg-white dark:bg-zinc-900">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-neutral-800 dark:text-neutral-200 mb-2">
-            MonacoStorage
-          </h1>
-          <p className="text-neutral-600 dark:text-neutral-400">
-            Premium Secure File Storage
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-            />
-          </div>
-
-          {error && (
-            <div className="text-red-500 text-sm text-center">{error}</div>
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+    <div className="min-h-screen flex items-center justify-center bg-vault-bg p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="max-w-md w-full"
+      >
+        <div className="text-center mb-12">
+          <motion.h1
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="font-serif text-4xl text-vault-text-primary mb-3"
           >
-            {isLoading ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
-        {/* link to register page */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Don't have an account?{" "}
-            <a
-              href="/register"
-              className="text-blue-500 hover:underline"
-            >
-              Sign up
-            </a>
-          </p>
+            Enter the Vault
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-vault-text-secondary text-sm tracking-widest uppercase"
+          >
+            Identity Verification Required
+          </motion.p>
         </div>
-      </BackgroundGradient>
+
+        <div className="bg-vault-surface border border-vault-border p-8 md:p-12 transition-colors duration-500">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="space-y-2">
+              <label
+                htmlFor="email"
+                className="block text-[10px] uppercase tracking-[0.2em] font-medium text-vault-text-secondary"
+              >
+                Identification (Email)
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full bg-transparent border-b border-vault-border py-2 text-vault-text-primary focus:outline-none focus:border-vault-accent transition-colors placeholder:text-vault-text-secondary/30"
+                placeholder="archive@monaco.vault"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="password"
+                className="block text-[10px] uppercase tracking-[0.2em] font-medium text-vault-text-secondary"
+              >
+                Access Key
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full bg-transparent border-b border-vault-border py-2 text-vault-text-primary focus:outline-none focus:border-vault-accent transition-colors placeholder:text-vault-text-secondary/30"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-4 bg-vault-accent text-vault-bg text-[11px] uppercase tracking-[0.3em] font-medium hover:opacity-90 transition-all disabled:opacity-50 mt-4"
+            >
+              {isLoading ? "Verifying..." : "Authorize Access"}
+            </button>
+          </form>
+
+          <div className="mt-10 text-center space-y-4">
+            <p className="text-[11px] text-vault-text-secondary uppercase tracking-widest">
+              No access card?{" "}
+              <Link
+                href="/register"
+                className="text-vault-text-primary font-medium hover:underline underline-offset-4"
+              >
+                Register
+              </Link>
+            </p>
+            <p className="text-[10px] text-vault-text-secondary/50 uppercase tracking-tighter">
+              Bespoke Encryption Active
+            </p>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
