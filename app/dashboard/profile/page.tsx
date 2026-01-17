@@ -17,10 +17,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function ProfilePage() {
-    const { user, authLoading } = useAuth();
 
-    if (authLoading) {
+export default function ProfilePage() {
+    const { user, isLoading } = useAuth();
+
+    if (isLoading) {
         return (
             <DashboardLayout>
                 <div className="flex items-center justify-center min-h-[60vh]">

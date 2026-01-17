@@ -128,7 +128,7 @@ export default function UploadPage() {
                     <div className="hidden md:flex items-center gap-4">
                         <div className="text-right">
                             <p className="text-[10px] uppercase tracking-widest text-vault-text-secondary">Deposit Origin</p>
-                            <p className="text-vault-text-primary text-xs font-medium uppercase tracking-tighter">Terminal ID: {user?.id?.slice(0, 8) || "SYSTEM"}</p>
+                            <p className="text-vault-text-primary text-xs font-medium uppercase tracking-tighter">Terminal ID: {user?.id || "SYSTEM"}</p>
                         </div>
                     </div>
                 </div>

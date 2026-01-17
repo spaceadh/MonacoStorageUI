@@ -21,7 +21,7 @@ import { formatBytes } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function SemanticSearchPage() {
-    const { accessToken, authLoading } = useAuth();
+    const { accessToken, isLoading } = useAuth();
     const [query, setQuery] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [results, setResults] = useState<SemanticSearchResult[]>([]);
@@ -58,7 +58,7 @@ export default function SemanticSearchPage() {
         }
     };
 
-    if (authLoading) {
+    if (isLoading) {
         return (
             <DashboardLayout>
                 <div className="flex items-center justify-center min-h-[60vh]">
