@@ -2,6 +2,7 @@
 import React, { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { InferenceConfigPanel } from "@/components/InferenceConfigPanel";
 import {
     CloudUpload,
     File,
@@ -12,11 +13,10 @@ import {
     ShieldCheck,
     Archive
 } from "lucide-react";
-import { apiClient } from "@/lib/api";
+import { apiClient, InferencePreset, inferencePresets } from "@/lib/api";
 import { formatBytes } from "@/lib/utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import axios from "axios";
 
 interface UploadingFile {
     file: File;
@@ -30,6 +30,8 @@ export default function UploadPage() {
     const [selectedFiles, setSelectedFiles] = useState<UploadingFile[]>([]);
     const [category, setCategory] = useState("Documents");
     const [isPublic, setIsPublic] = useState(false);
+    const [inferenceEnabled, setInferenceEnabled] = useState(false);
+    const [inferencePreset, setInferencePreset] = useState<InferencePreset>("private");
 
     const onDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -75,34 +77,37 @@ export default function UploadPage() {
         });
 
         try {
-            const formData = new FormData();
-            formData.append("file", fileItem.file);
-            formData.append("category", category);
-            formData.append("isPublic", String(isPublic));
+            // Build inference config if enabled
+            const inferenceConfig = inferenceEnabled
+                ? inferencePresets[inferencePreset].config
+                : undefined;
 
-            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9442/api/v1'}/files/upload`, formData, {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'multipart/form-data'
-                },
-                onUploadProgress: (progressEvent) => {
-                    const progress = progressEvent.total ? Math.round((progressEvent.loaded * 100) / progressEvent.total) : 0;
+            // Use new apiClient uploadFile method
+            await apiClient.uploadFile(
+                fileItem.file,
+                category,
+                isPublic,
+                accessToken!,
+                inferenceConfig,
+                (progress) => {
                     setSelectedFiles(prev => {
                         const copy = [...prev];
                         copy[index].progress = progress;
                         return copy;
                     });
                 }
+            );
+
+            setSelectedFiles(prev => {
+                const copy = [...prev];
+                copy[index].status = "success";
+                return copy;
             });
 
-            if (response.status === 200) {
-                setSelectedFiles(prev => {
-                    const copy = [...prev];
-                    copy[index].status = "success";
-                    return copy;
-                });
-                toast.success(`Asset "${fileItem.file.name}" secured`);
-            }
+            const processingStatus = inferenceEnabled
+                ? ` with ${inferencePresets[inferencePreset].label} inference`
+                : "";
+            toast.success(`Asset "${fileItem.file.name}" secured${processingStatus}`);
         } catch (error: any) {
             console.error("Deposit error:", error);
             setSelectedFiles(prev => {
@@ -205,12 +210,14 @@ export default function UploadPage() {
 
                     {/* Protocol Settings */}
                     <div className="flex flex-col gap-8">
-                        <div className="bg-vault-surface border border-vault-border p-8">
-                            <h3 className="text-[11px] uppercase tracking-[0.2em] text-vault-text-secondary font-bold mb-8 flex items-center gap-2">
-                                <Lock className="h-3 w-3" strokeWidth={2} /> Ingestion Protocol
-                            </h3>
+                        <div className="space-y-6 bg-vault-surface border border-vault-border p-8">
+                            <div>
+                                <h3 className="text-[11px] uppercase tracking-[0.2em] text-vault-text-secondary font-bold mb-4 flex items-center gap-2">
+                                    <Lock className="h-3 w-3" strokeWidth={2} /> Ingestion Protocol
+                                </h3>
+                            </div>
 
-                            <div className="flex flex-col gap-6">
+                            <div className="space-y-6">
                                 <div className="space-y-3">
                                     <label className="text-[10px] uppercase tracking-widest text-vault-text-secondary font-medium">Asset Classification</label>
                                     <select
@@ -244,12 +251,21 @@ export default function UploadPage() {
                                         </div>
                                     </div>
                                 </div>
+
+                                <div className="pt-2 border-t border-vault-border">
+                                    <InferenceConfigPanel
+                                        enabled={inferenceEnabled}
+                                        preset={inferencePreset}
+                                        onEnabledChange={setInferenceEnabled}
+                                        onPresetChange={setInferencePreset}
+                                    />
+                                </div>
                             </div>
 
                             <button
                                 onClick={startUpload}
                                 disabled={selectedFiles.length === 0 || selectedFiles.every(f => f.status === "success" || f.status === "uploading")}
-                                className="w-full mt-10 bg-vault-accent hover:bg-vault-text-primary text-vault-bg disabled:opacity-30 disabled:grayscale py-4 flex items-center justify-center gap-3 transition-all duration-300"
+                                className="w-full bg-vault-accent hover:bg-vault-text-primary text-vault-bg disabled:opacity-30 disabled:grayscale py-4 flex items-center justify-center gap-3 transition-all duration-300"
                             >
                                 <Lock className="h-4 w-4" strokeWidth={1.5} />
                                 <span className="text-xs uppercase tracking-[0.2em] font-bold">Execute Deposit</span>

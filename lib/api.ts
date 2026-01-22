@@ -182,6 +182,46 @@ class ApiClient {
   async semanticSearch(query: string, token: string) {
     return this.post<SemanticSearchResponse>('/files/search/semantic', { query }, token);
   }
+
+  // File upload with optional inference configuration
+  async uploadFile(
+    file: File,
+    category: string,
+    isPublic: boolean,
+    token: string,
+    inferenceConfig?: InferenceConfigDto,
+    onUploadProgress?: (progress: number) => void
+  ): Promise<UploadFileResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('category', category);
+    formData.append('isPublic', String(isPublic));
+    formData.append('inference', String(!!inferenceConfig?.enabled));
+
+    if (inferenceConfig?.enabled) {
+      formData.append('inferenceConfig', JSON.stringify(inferenceConfig));
+    }
+
+    const config: AxiosRequestConfig = {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onUploadProgress && progressEvent.total) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onUploadProgress(progress);
+        }
+      }
+    };
+
+    const response = await this.axiosInstance.post<UploadFileResponse>(
+      '/files/upload',
+      formData,
+      config
+    );
+    return response.data;
+  }
 }
 
 // Types
@@ -380,6 +420,58 @@ export interface SemanticSearchResult {
 
 export interface SemanticSearchResponse {
   results: SemanticSearchResult[];
+}
+
+// Inference Configuration
+export interface InferenceConfigDto {
+  enabled: boolean;
+  visibility?: string;  // PRIVATE, PUBLIC, TEAM
+  scope?: string;        // DOCUMENT, COLLECTION, GLOBAL
+}
+
+export type InferencePreset = 'private' | 'public' | 'team' | 'disabled';
+
+export const inferencePresets: Record<InferencePreset, { label: string; description: string; config?: InferenceConfigDto }> = {
+  disabled: {
+    label: 'No Processing',
+    description: 'File stored without AI analysis'
+  },
+  private: {
+    label: 'Private Document',
+    description: 'Indexed for personal retrieval only',
+    config: {
+      enabled: true,
+      visibility: 'PRIVATE',
+      scope: 'DOCUMENT'
+    }
+  },
+  public: {
+    label: 'Public Document',
+    description: 'Searchable externally and indexed',
+    config: {
+      enabled: true,
+      visibility: 'PUBLIC',
+      scope: 'DOCUMENT'
+    }
+  },
+  team: {
+    label: 'Team Collection',
+    description: 'Indexed with team scope for collaboration',
+    config: {
+      enabled: true,
+      visibility: 'TEAM',
+      scope: 'COLLECTION'
+    }
+  }
+};
+
+export interface UploadFileResponse {
+  message: string;
+  storageUrl: string;
+  presignedUrl: string;
+  fileId: string;
+  status: number;
+  success: boolean;
 }
 
 export const apiClient = new ApiClient();
