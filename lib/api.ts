@@ -1,17 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { User } from "@/contexts/AuthContext";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9442/api/v1';
-
-export interface User {
-  id: number;
-  email: string;
-  userName: string;
-  firstName: string;
-  lastName: string | null;
-  avatarUrl: string | null;
-  role: string;
-  isActive: boolean;
-}
 
 class ApiClient {
   private axiosInstance: AxiosInstance;

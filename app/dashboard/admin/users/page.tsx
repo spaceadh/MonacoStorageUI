@@ -15,7 +15,8 @@ import {
     ShieldAlert,
     Fingerprint
 } from "lucide-react";
-import { apiClient, User } from "@/lib/api";
+import { apiClient } from "@/lib/api";
+import { User } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 

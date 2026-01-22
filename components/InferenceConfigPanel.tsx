@@ -64,8 +64,8 @@ export function InferenceConfigPanel({
 
           <div className="space-y-2">
             {(["private", "public", "team"] as const).map((presetKey) => {
-              const preset = inferencePresets[presetKey];
-              const isSelected = enabled && presetKey === (enabled ? preset : "disabled");
+              const presetConfig = inferencePresets[presetKey];
+              const isSelected = presetKey === preset;
 
               return (
                 <button
@@ -92,10 +92,10 @@ export function InferenceConfigPanel({
                   </div>
                   <div className="flex-1 text-left">
                     <p className="text-xs font-medium text-vault-text-primary uppercase tracking-tighter">
-                      {preset.label}
+                      {presetConfig.label}
                     </p>
                     <p className="text-[9px] text-vault-text-secondary mt-1">
-                      {preset.description}
+                      {presetConfig.description}
                     </p>
                   </div>
                 </button>

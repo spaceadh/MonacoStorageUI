@@ -2,8 +2,18 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient, LicenseInfo } from '@/lib/api';
-import type { User } from '@/lib/api';
 import { toast } from 'sonner';
+
+export interface User {
+  id: number;
+  email: string;
+  userName: string;
+  firstName: string;
+  lastName: string | null;
+  avatarUrl: string | null;
+  role: string;
+  isActive: boolean;
+}
 
 interface AuthContextType {
   user: User | null;
