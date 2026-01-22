@@ -119,7 +119,7 @@ export default function FilesPage() {
                         className="bg-vault-accent hover:bg-vault-text-primary text-vault-bg px-5 py-2.5 flex items-center gap-2 transition-colors duration-300 group"
                     >
                         <Plus className="h-4 w-4" strokeWidth={1.5} />
-                        <span className="text-xs uppercase tracking-widest font-medium">Deposit Asset</span>
+                        <span className="text-xs uppercase tracking-widest font-medium">secure File</span>
                     </button>
                 </div>
 

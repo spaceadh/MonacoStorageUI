@@ -13,18 +13,19 @@
 }
 
 :root {
-  /* Light Mode - Standard Luxury (Adjusted for higher contrast) */
-  --vault-bg: #EAE8E3;
-  /* Darker Bone/Oatmeal hybrid */
-  --vault-surface: #F2EFE9;
-  /* Kept light for elevation contrast */
-  --vault-text-primary: #111827;
-  /* Near black instead of dark grey */
-  --vault-text-secondary: #4B5563;
-  /* Darker grey for better readability */
-  --vault-border: #D1D5DB;
-  /* Slightly stronger border */
-  --vault-accent: #0F172A;
+  /* Light Mode - Premium Vault Palette */
+  --vault-bg: #D8D5CC;
+  /* Warm greige - deeper tone */
+  --vault-surface: #E8E6DE;
+  /* Subtle elevation with warm undertone */
+  --vault-text-primary: #1A1814;
+  /* Rich black with warmth */
+  --vault-text-secondary: #5A5751;
+  /* Muted taupe for secondary text */
+  --vault-border: #B8B5AC;
+  /* Stronger, more visible borders */
+  --vault-accent: #2C2A24;
+  /* Deep charcoal accent */
 }
 
 [class~="dark"] {

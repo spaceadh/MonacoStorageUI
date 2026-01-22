@@ -147,29 +147,29 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-12 pb-10">
-        <div className="flex justify-between items-end border-b border-vault-border pb-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-end border-b border-vault-border pb-6 gap-4">
           <div>
-            <h1 className="text-5xl font-serif text-vault-text-primary mb-2">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-vault-text-primary mb-2">
               Overview
             </h1>
             <p className="text-[11px] uppercase tracking-[0.2em] text-vault-text-secondary">
               Vault Status: <span className="text-vault-accent font-medium">Active</span> • {user?.userName}
             </p>
           </div>
-          <div className="hidden md:block text-right">
+          <div className="md:text-right">
             <p className="text-[10px] uppercase tracking-widest text-vault-text-secondary mb-1">Encrypted At Rest</p>
-            <p className="text-vault-text-primary text-sm font-medium flex items-center gap-2 justify-end">
+            <p className="text-vault-text-primary text-sm font-medium flex items-center gap-2 md:justify-end">
               <IconShield className="h-4 w-4" /> AES-256 GCM
             </p>
           </div>
         </div>
 
         {/* Stats Grid - The Ledger Format */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
           <div className="p-0">
             <h3 className="text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em] mb-4 border-b border-vault-border pb-2">Storage Allocation</h3>
             <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-4xl font-serif text-vault-text-primary">{formatBytes(usedStorage)}</span>
+              <span className="text-3xl sm:text-4xl font-serif text-vault-text-primary">{formatBytes(usedStorage)}</span>
             </div>
             <p className="text-xs text-vault-text-secondary">Used of 10 GB Provision</p>
           </div>
@@ -177,7 +177,7 @@ export default function DashboardPage() {
           <div className="p-0">
             <h3 className="text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em] mb-4 border-b border-vault-border pb-2">Total Assets</h3>
             <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-4xl font-serif text-vault-text-primary">{totalFiles}</span>
+              <span className="text-3xl sm:text-4xl font-serif text-vault-text-primary">{totalFiles}</span>
             </div>
             <p className="text-xs text-vault-text-secondary">Secured Documents</p>
           </div>
@@ -185,7 +185,7 @@ export default function DashboardPage() {
           <div className="p-0">
             <h3 className="text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em] mb-4 border-b border-vault-border pb-2">External Access</h3>
             <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-4xl font-serif text-vault-text-primary">{sharedFiles}</span>
+              <span className="text-3xl sm:text-4xl font-serif text-vault-text-primary">{sharedFiles}</span>
             </div>
             <p className="text-xs text-vault-text-secondary">Active Public Links</p>
           </div>
@@ -207,8 +207,8 @@ export default function DashboardPage() {
 
         {/* Recent Files Section */}
         <div className="mt-8">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-serif text-vault-text-primary">Recent Deposit Log</h2>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+            <h2 className="text-xl sm:text-2xl font-serif text-vault-text-primary">Recent Deposit Log</h2>
             <button
               onClick={() => router.push("/dashboard/files")}
               className="text-vault-accent hover:opacity-80 text-[11px] uppercase tracking-widest font-medium flex items-center gap-2 transition-opacity"
@@ -224,51 +224,54 @@ export default function DashboardPage() {
                 <p className="text-vault-text-secondary text-sm">No assets found in the vault.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <table className="w-full text-left min-w-[640px]">
                   <thead>
                     <tr className="border-b border-vault-border">
-                      <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Asset Name</th>
-                      <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Size</th>
-                      <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Timestamp</th>
-                      <th className="px-6 py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em] text-right">Actions</th>
+                      <th className="px-3 sm:px-6 py-4 sm:py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Asset Name</th>
+                      <th className="px-3 sm:px-6 py-4 sm:py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em] hidden sm:table-cell">Size</th>
+                      <th className="px-3 sm:px-6 py-4 sm:py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em] hidden md:table-cell">Timestamp</th>
+                      <th className="px-3 sm:px-6 py-4 sm:py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em] text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-vault-border">
                     {recentFiles.map((file) => (
                       <tr key={file.id} className="hover:bg-vault-surface/50 transition-colors group">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-4">
-                            <div className="h-8 w-8 flex items-center justify-center text-vault-text-primary border border-vault-border bg-vault-surface">
-                              <IconFiles className="h-4 w-4" strokeWidth={1} />
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="flex items-center gap-2 sm:gap-4">
+                            <div className="h-6 w-6 sm:h-8 sm:w-8 flex items-center justify-center text-vault-text-primary border border-vault-border bg-vault-surface flex-shrink-0">
+                              <IconFiles className="h-3 w-3 sm:h-4 sm:w-4" strokeWidth={1} />
                             </div>
-                            <div>
-                              <p className="font-serif text-[15px] text-vault-text-primary group-hover:text-vault-accent transition-colors truncate max-w-xs">{file.fileName}</p>
-                              <p className="text-[10px] text-vault-text-secondary uppercase tracking-wider">{file.category}</p>
+                            <div className="min-w-0">
+                              <p className="font-serif text-[13px] sm:text-[15px] text-vault-text-primary group-hover:text-vault-accent transition-colors truncate">{file.fileName}</p>
+                              <p className="text-[9px] sm:text-[10px] text-vault-text-secondary uppercase tracking-wider">{file.category}</p>
+                              <p className="text-[10px] text-vault-text-secondary sm:hidden mt-1">
+                                {formatBytes(file.sizeInBytes)}
+                              </p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-xs tabular-nums text-vault-text-secondary">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs tabular-nums text-vault-text-secondary hidden sm:table-cell">
                           {formatBytes(file.sizeInBytes)}
                         </td>
-                        <td className="px-6 py-4 text-xs tabular-nums text-vault-text-secondary">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs tabular-nums text-vault-text-secondary hidden md:table-cell">
                           {formatDate(file.uploadedAt)}
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
+                          <div className="flex justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => handleDownload(file.id)}
-                              className="p-2 hover:bg-vault-surface hover:text-vault-accent rounded-sm transition-colors text-vault-text-secondary"
+                              className="p-1.5 sm:p-2 hover:bg-vault-surface hover:text-vault-accent rounded-sm transition-colors text-vault-text-secondary"
                               title="Download"
                             >
-                              <IconDownload className="h-4 w-4" strokeWidth={1.25} />
+                              <IconDownload className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={1.25} />
                             </button>
                             <button
                               onClick={() => handleShare(file.id)}
-                              className="p-2 hover:bg-vault-surface hover:text-vault-accent rounded-sm transition-colors text-vault-text-secondary"
+                              className="p-1.5 sm:p-2 hover:bg-vault-surface hover:text-vault-accent rounded-sm transition-colors text-vault-text-secondary"
                               title="Share"
                             >
-                              <IconShare className="h-4 w-4" strokeWidth={1.25} />
+                              <IconShare className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={1.25} />
                             </button>
                           </div>
                         </td>

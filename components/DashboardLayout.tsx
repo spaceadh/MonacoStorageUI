@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import {
@@ -14,6 +14,8 @@ import {
   LogOut,
   User,
   MoreVertical,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -24,8 +26,27 @@ import { QuotaGauge } from "@/components/QuotaGauge";
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout, licenses } = useAuth();
-  const [open, setOpen] = useState(false);
   const router = useRouter();
+
+  // Initialize sidebar state based on screen size
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    // Set initial state based on screen size
+    const handleResize = () => {
+      const isDesktop = window.innerWidth >= 768; // md breakpoint
+      setOpen(isDesktop);
+    };
+
+    // Set initial state
+    handleResize();
+
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const links = [
     {
@@ -74,13 +95,35 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const usedStorage = 0; // This should be fetched properly, but for layout we use 0
 
   return (
-    <div className="flex h-screen bg-vault-bg overflow-hidden font-sans">
+    <div className="flex flex-col md:flex-row h-screen bg-vault-bg overflow-hidden font-sans">
       <Sidebar open={open} setOpen={setOpen}>
-        <SidebarBody className="justify-between gap-10 bg-vault-surface border-r border-vault-border">
+        <SidebarBody className="justify-between gap-10 bg-vault-surface md:border-r border-vault-border">
           <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-            <div className="py-4">
-              {open ? <Logo /> : <LogoIcon />}
-            </div>
+            {open ? (
+              <div className="py-4 flex items-center justify-between">
+                <div className="flex-1">
+                  <Logo />
+                </div>
+                <button
+                  onClick={() => setOpen(!open)}
+                  className="text-vault-text-secondary hover:text-vault-accent transition-colors p-1.5 hover:bg-vault-accent/5 rounded-sm flex-shrink-0"
+                  title="Collapse sidebar"
+                >
+                  <PanelLeftClose className="h-4 w-4" strokeWidth={1.5} />
+                </button>
+              </div>
+            ) : (
+              <div className="py-4 flex flex-col items-center gap-4">
+                <LogoIcon />
+                <button
+                  onClick={() => setOpen(!open)}
+                  className="text-vault-text-secondary hover:text-vault-accent transition-colors p-1.5 hover:bg-vault-accent/5 rounded-sm"
+                  title="Expand sidebar"
+                >
+                  <PanelLeftOpen className="h-4 w-4" strokeWidth={1.5} />
+                </button>
+              </div>
+            )}
             <div className="mt-12 flex flex-col gap-1">
               {links.map((link, idx) => (
                 <div key={idx} className={cn(
@@ -137,29 +180,30 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </SidebarBody>
       </Sidebar>
 
-      <main className="flex-1 overflow-hidden flex flex-col">
-        <header className="h-20 border-b border-vault-border flex items-center justify-between px-8 bg-vault-bg/80 backdrop-blur-sm z-30">
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-vault-text-secondary">Monaco Vault System</span>
-            <div className="h-3 w-[1px] bg-vault-border" />
-            <span className="text-[10px] uppercase tracking-[0.3em] text-vault-text-primary font-medium">
+      <main className="flex-1 overflow-hidden flex flex-col min-h-0">
+        <header className="h-16 sm:h-20 border-b border-vault-border flex items-center justify-between px-4 sm:px-6 md:px-8 bg-vault-bg/80 backdrop-blur-sm z-30 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-4 overflow-hidden">
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-vault-text-secondary whitespace-nowrap">Monaco Vault System</span>
+            <div className="h-3 w-[1px] bg-vault-border hidden sm:block" />
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-vault-text-primary font-medium truncate">
               {pathname === "/dashboard" ? "Main Dashboard" : pathname.split('/').pop()?.replace('-', ' ')}
             </span>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 sm:gap-6">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
-              <span className="text-[10px] uppercase tracking-widest text-vault-text-secondary">System Online</span>
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider sm:tracking-widest text-vault-text-secondary whitespace-nowrap hidden xs:inline">System Online</span>
             </div>
           </div>
         </header>
 
-        <div className="p-8 md:p-12 overflow-y-auto flex-1 items-start">
+        <div className="p-4 sm:p-6 md:p-8 lg:p-12 overflow-y-auto flex-1 items-start min-h-0">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="h-full"
           >
             {children}
           </motion.div>
