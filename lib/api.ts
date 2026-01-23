@@ -165,8 +165,9 @@ class ApiClient {
   }
 
   // Audit & Search (Phase 5)
-  async getAuditLogs(token: string) {
-    return this.get<AuditLogResponse>('/audit/logs', token);
+  async getAuditLogs(token: string, page: number = 0, pageSize: number = 50) {
+    const endpoint = `/audit/logs?page=${page}&pageSize=${pageSize}`;
+    return this.get<AuditLogsPageResponse>(endpoint, token);
   }
 
   async semanticSearch(query: string, token: string) {
@@ -387,6 +388,26 @@ export interface ShareFileResponse {
   expiryHours: number;
 }
 
+export interface AuditLog {
+  id: number;
+  email: string;
+  action: string;
+  type: 'SUCCESS' | 'FAILURE';
+  timestamp: string;
+  additionalData?: string;
+}
+
+export interface AuditLogsPageResponse {
+  logs: AuditLog[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+// Legacy interface for backward compatibility
 export interface AuditEntry {
   id: string;
   timestamp: string;

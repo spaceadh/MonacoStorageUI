@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { apiClient, AuditEntry } from "@/lib/api";
+import { apiClient, AuditLog } from "@/lib/api";
 import {
     History,
     Search,
@@ -24,30 +24,45 @@ import { toast } from "sonner";
 
 export default function AuditLogsPage() {
     const { accessToken, isLoading: authLoading } = useAuth();
-    const [logs, setLogs] = useState<AuditEntry[]>([]);
+    const [logs, setLogs] = useState<AuditLogUI[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
 
     useEffect(() => {
         if (!authLoading && accessToken) {
-            loadLogs();
+            loadLogs(currentPage);
         }
-    }, [accessToken, authLoading]);
+    }, [accessToken, authLoading, currentPage]);
 
-    const loadLogs = async () => {
+    const loadLogs = async (page: number) => {
         try {
             setIsLoading(true);
-            const result = await apiClient.getAuditLogs(accessToken!);
+            const result = await apiClient.getAuditLogs(accessToken!, page, 50);
             if (result && result.logs) {
-                setLogs(result.logs);
+                // Convert backend format to UI format
+                const uiLogs: AuditLogUI[] = result.logs.map(log => ({
+                    id: log.id.toString(),
+                    timestamp: formatDateTime(log.timestamp),
+                    actor: log.email,
+                    operation: log.action,
+                    resource: log.additionalData || "N/A",
+                    status: log.type === 'SUCCESS' ? 'SUCCESS' : 'FAILURE',
+                    details: log.additionalData
+                }));
+                setLogs(uiLogs);
+                setTotalPages(result.totalPages);
+                setTotalElements(result.totalElements);
             } else {
                 // Fallback to mock data for demonstration if backend is not ready
-                setLogs(MOCK_AUDIT_LOGS);
+                setLogs(MOCK_AUDIT_LOGS_UI);
             }
         } catch (err) {
             console.error("Failed to load audit logs:", err);
-            setLogs(MOCK_AUDIT_LOGS);
+            setLogs(MOCK_AUDIT_LOGS_UI);
             toast.info("Displaying local audit registry (System Offline)");
         } finally {
             setIsLoading(false);
@@ -64,6 +79,18 @@ export default function AuditLogsPage() {
 
         return matchesSearch && matchesStatus;
     });
+
+    const handleNextPage = () => {
+        if (currentPage < totalPages - 1) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const handlePreviousPage = () => {
+        if (currentPage > 0) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
 
     if (authLoading) {
         return (
@@ -207,6 +234,41 @@ export default function AuditLogsPage() {
                     </table>
                 </div>
 
+                {/* Pagination Controls */}
+                {totalPages > 0 && (
+                    <div className="flex items-center justify-between border-t border-vault-border pt-6">
+                        <div className="text-[10px] uppercase tracking-widest text-vault-text-secondary">
+                            Page {currentPage + 1} of {totalPages} • {totalElements} total entries
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handlePreviousPage}
+                                disabled={currentPage === 0}
+                                className={cn(
+                                    "px-3 py-2 text-[9px] uppercase tracking-widest font-bold border transition-colors",
+                                    currentPage === 0
+                                        ? "text-vault-text-secondary/50 border-vault-border/50 cursor-not-allowed"
+                                        : "text-vault-text-secondary border-vault-border hover:border-vault-accent hover:text-vault-accent"
+                                )}
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={handleNextPage}
+                                disabled={currentPage >= totalPages - 1}
+                                className={cn(
+                                    "px-3 py-2 text-[9px] uppercase tracking-widest font-bold border transition-colors",
+                                    currentPage >= totalPages - 1
+                                        ? "text-vault-text-secondary/50 border-vault-border/50 cursor-not-allowed"
+                                        : "text-vault-text-secondary border-vault-border hover:border-vault-accent hover:text-vault-accent"
+                                )}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Legend */}
                 <div className="flex gap-10 border-t border-vault-border pt-8 mt-4">
                     <div className="flex flex-col gap-2">
@@ -228,7 +290,36 @@ export default function AuditLogsPage() {
     );
 }
 
-const MOCK_AUDIT_LOGS: AuditEntry[] = [
+// UI representation of audit logs (transformed from backend)
+interface AuditLogUI {
+    id: string;
+    timestamp: string;
+    actor: string;
+    operation: string;
+    resource: string;
+    status: 'SUCCESS' | 'FAILURE' | 'WARNING';
+    details?: string;
+}
+
+// Helper function to format ISO datetime to readable format
+function formatDateTime(isoString: string): string {
+    try {
+        const date = new Date(isoString);
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }).replace(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+):(\d+)/, '$3-$1-$2 $4:$5:$6');
+    } catch {
+        return isoString;
+    }
+}
+
+const MOCK_AUDIT_LOGS_UI: AuditLogUI[] = [
     {
         id: "1",
         timestamp: "2024-05-20 14:32:11",
