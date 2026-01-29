@@ -4,8 +4,8 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-export function formatBytes(bytes: number, decimals: number = 2) {
-  if (bytes === 0) return "0 Bytes";
+export function formatBytes(bytes: number | undefined | null, decimals: number = 2) {
+  if (bytes === undefined || bytes === null || bytes === 0) return "0 Bytes";
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];

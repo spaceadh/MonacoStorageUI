@@ -22,14 +22,17 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { QuotaGauge } from "@/components/QuotaGauge";
+import { apiClient } from "@/lib/api";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, logout, licenses } = useAuth();
+  const { user, logout, licenses, accessToken } = useAuth();
   const router = useRouter();
 
   // Initialize sidebar state based on screen size
   const [open, setOpen] = useState(false);
+  const [usedStorage, setUsedStorage] = useState(0);
+  const [quotaLoading, setQuotaLoading] = useState(true);
 
   useEffect(() => {
     // Set initial state based on screen size
@@ -47,6 +50,26 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     // Cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Fetch quota data
+  useEffect(() => {
+    const fetchQuota = async () => {
+      try {
+        if (accessToken) {
+          const quota = await apiClient.getUserQuota(accessToken);
+          if (quota && quota.usedStorage !== undefined) {
+            setUsedStorage(quota.usedStorage);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch quota:', error);
+      } finally {
+        setQuotaLoading(false);
+      }
+    };
+
+    fetchQuota();
+  }, [accessToken]);
 
   const links = [
     {
@@ -91,8 +114,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     router.push('/login');
   };
 
-  const totalStorage = 10 * 1024 * 1024 * 1024; // 10GB demo
-  const usedStorage = 0; // This should be fetched properly, but for layout we use 0
+  const totalStorage = 10 * 1024 * 1024 * 1024; // 10GB quota
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-vault-bg overflow-hidden font-sans">

@@ -174,6 +174,33 @@ class ApiClient {
     return this.post<SemanticSearchResponse>('/files/search/semantic', { query }, token);
   }
 
+  // Multi-Scope Search (Phase 6)
+  async multiScopeSearch(request: MultiScopeSearchRequest, token: string) {
+    return this.post<MultiScopeSearchResponse>('/query/multi-scope', request, token);
+  }
+
+  async getUserScopes(token: string) {
+    return this.get<UserScopes>('/query/user-scopes', token);
+  }
+
+  // Search History (Phase 6)
+  async getSearchHistory(token: string, page: number = 0, size: number = 20) {
+    const endpoint = `/search-history?page=${page}&size=${size}`;
+    return this.get<SearchHistoryPageResponse>(endpoint, token);
+  }
+
+  async deleteSearchHistoryEntry(id: number, token: string) {
+    return this.delete<SearchHistoryResponse>(`/search-history/${id}`, token);
+  }
+
+  async clearAllSearchHistory(token: string) {
+    return this.post<SearchHistoryResponse>('/search-history/clear-all', {}, token);
+  }
+
+  async getSearchAnalytics(token: string) {
+    return this.get<SearchAnalytics>('/search-history/analytics', token);
+  }
+
   // File upload with optional inference configuration
   async uploadFile(
     file: File,
@@ -483,6 +510,82 @@ export interface UploadFileResponse {
   fileId: string;
   status: number;
   success: boolean;
+}
+
+// Multi-Scope Search Types
+export interface MultiScopeSearchRequest {
+  query: string;
+  nResults?: number;
+  scopes?: string[]; // VisibilityLevel[]
+  departmentFilter?: string;
+  organizationFilter?: string;
+}
+
+export interface SearchResultItem {
+  text: string;
+  distance: number;
+  sourceDocument: string;
+  fileId?: string;
+  collectionName?: string;
+}
+
+export interface MultiScopeSearchResponse {
+  results: SearchResultItem[];
+  scopeBreakdown: Record<string, number>;
+  success: boolean;
+  message: string;
+  executionTimeMs?: number;
+}
+
+export interface UserScopes {
+  userId: number;
+  department?: string;
+  organization?: string;
+  roleLevel?: string;
+}
+
+// Search History Types
+export interface SearchHistoryEntry {
+  id: number;
+  userId: number;
+  query: string;
+  resultCount: number;
+  timestamp: string;
+  searchedScopesJson?: string;
+  userDepartment?: string;
+  userOrganization?: string;
+  filtersJson?: string;
+  executionTimeMs?: number;
+  errorMessage?: string;
+  wasSuccessful: boolean;
+}
+
+export interface SearchHistoryPageResponse {
+  content: SearchHistoryEntry[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+  first: boolean;
+  message: string;
+  success: boolean;
+}
+
+export interface SearchHistoryResponse {
+  message: string;
+  success: boolean;
+  data?: SearchHistoryEntry;
+}
+
+export interface SearchAnalytics {
+  totalSearches: number;
+  scopeUsageDistribution: Record<string, number>;
+  averageResultsPerSearch: number;
+  averageExecutionTimeMs?: number;
+  resultCountDistribution: Record<string, number>;
+  topQueries: string[];
+  searchesByDay?: Record<string, number>;
 }
 
 export const apiClient = new ApiClient();
