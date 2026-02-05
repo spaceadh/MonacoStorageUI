@@ -1,15 +1,31 @@
 "use client";
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiClient } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [registrationAllowed, setRegistrationAllowed] = useState(false);
   const { login, isLoading } = useAuth();
   const router = useRouter();
+
+  // Check if registration is allowed
+  useEffect(() => {
+    const checkRegistration = async () => {
+      try {
+        const response = await apiClient.checkRegistrationStatus();
+        setRegistrationAllowed(response.registrationAllowed);
+      } catch (error) {
+        console.error('Error checking registration status:', error);
+        setRegistrationAllowed(false);
+      }
+    };
+    checkRegistration();
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -96,15 +112,17 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-10 text-center space-y-4">
-            <p className="text-[11px] text-vault-text-secondary uppercase tracking-widest">
-              No access card?{" "}
-              <Link
-                href="/register"
-                className="text-vault-text-primary font-medium hover:underline underline-offset-4"
-              >
-                Register
-              </Link>
-            </p>
+            {registrationAllowed && (
+              <p className="text-[11px] text-vault-text-secondary uppercase tracking-widest">
+                No access card?{" "}
+                <Link
+                  href="/register"
+                  className="text-vault-text-primary font-medium hover:underline underline-offset-4"
+                >
+                  Register
+                </Link>
+              </p>
+            )}
             <p className="text-[10px] text-vault-text-secondary/50 uppercase tracking-tighter">
               Bespoke Encryption Active
             </p>

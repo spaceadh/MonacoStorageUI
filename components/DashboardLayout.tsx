@@ -16,12 +16,14 @@ import {
   MoreVertical,
   PanelLeftClose,
   PanelLeftOpen,
+  Building2,
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { QuotaGauge } from "@/components/QuotaGauge";
+import { TenantSwitcher } from "@/components/TenantSwitcher";
 import { apiClient } from "@/lib/api";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -93,6 +95,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       icon: <CloudUpload strokeWidth={1.25} className="h-5 w-5" />,
     },
     {
+      label: "Tenant Registry",
+      href: "/dashboard/admin/tenants",
+      icon: <Building2 strokeWidth={1.25} className="h-5 w-5" />,
+    },
+    {
+      label: "User Registry",
+      href: "/dashboard/admin/users",
+      icon: <Users strokeWidth={1.25} className="h-5 w-5" />,
+    },
+    {
       label: "Security & IP",
       href: "/dashboard/admin/ip-management",
       icon: <ShieldCheck strokeWidth={1.25} className="h-5 w-5" />,
@@ -128,7 +140,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 </div>
                 <button
                   onClick={() => setOpen(!open)}
-                  className="text-vault-text-secondary hover:text-vault-accent transition-colors p-1.5 hover:bg-vault-accent/5 rounded-sm flex-shrink-0"
+                  className="text-vault-text-secondary hover:text-vault-accent transition-colors p-1.5 hover:bg-vault-accent/5 rounded-sm shrink-0"
                   title="Collapse sidebar"
                 >
                   <PanelLeftClose className="h-4 w-4" strokeWidth={1.5} />
@@ -203,16 +215,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       </Sidebar>
 
       <main className="flex-1 overflow-hidden flex flex-col min-h-0">
-        <header className="h-16 sm:h-20 border-b border-vault-border flex items-center justify-between px-4 sm:px-6 md:px-8 bg-vault-bg/80 backdrop-blur-sm z-30 flex-shrink-0">
+        <header className="h-16 sm:h-20 border-b border-vault-border flex items-center justify-between px-4 sm:px-6 md:px-8 bg-vault-bg/80 backdrop-blur-sm z-30 shrink-0">
           <div className="flex items-center gap-2 sm:gap-4 overflow-hidden">
             <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-vault-text-secondary whitespace-nowrap">Monaco Vault System</span>
-            <div className="h-3 w-[1px] bg-vault-border hidden sm:block" />
+            <div className="h-3 w-px bg-vault-border hidden sm:block" />
             <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-vault-text-primary font-medium truncate">
               {pathname === "/dashboard" ? "Main Dashboard" : pathname.split('/').pop()?.replace('-', ' ')}
             </span>
           </div>
 
           <div className="flex items-center gap-3 sm:gap-6">
+            <TenantSwitcher />
+            <div className="h-3 w-1px bg-vault-border hidden sm:block" />
             <div className="flex items-center gap-1.5 sm:gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
               <span className="text-[9px] sm:text-[10px] uppercase tracking-wider sm:tracking-widest text-vault-text-secondary whitespace-nowrap hidden xs:inline">System Online</span>

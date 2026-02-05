@@ -1,18 +1,45 @@
 "use client";
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiClient } from "@/lib/api";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import Link from "next/link";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [registrationAllowed, setRegistrationAllowed] = useState<boolean | null>(null);
   const { signup, isLoading } = useAuth();
   const router = useRouter();
 
+  // Check if registration is allowed
+  useEffect(() => {
+    const checkRegistration = async () => {
+      try {
+        const response = await apiClient.checkRegistrationStatus();
+        setRegistrationAllowed(response.registrationAllowed);
+        if (!response.registrationAllowed) {
+          toast.error("Registration is currently disabled. Please contact the administrator.");
+          setTimeout(() => router.push("/login"), 2000);
+        }
+      } catch (error) {
+        console.error('Error checking registration status:', error);
+        setRegistrationAllowed(false);
+        toast.error("Unable to verify registration status.");
+        setTimeout(() => router.push("/login"), 2000);
+      }
+    };
+    checkRegistration();
+  }, [router]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!registrationAllowed) {
+      toast.error("Registration is not allowed at this time.");
+      return;
+    }
     try {
       await signup(email, password, email.split('@')[0]);
       router.push("/dashboard");
@@ -20,6 +47,17 @@ export default function SignupPage() {
       // Errors are handled by the toast in AuthContext
     }
   };
+
+  // Show loading state while checking registration status
+  if (registrationAllowed === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-vault-bg">
+        <div className="text-vault-text-secondary text-sm tracking-widest uppercase">
+          Verifying access...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-vault-bg p-6">

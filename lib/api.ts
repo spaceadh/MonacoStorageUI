@@ -57,6 +57,10 @@ class ApiClient {
   }
 
   // User Registration, registration and management
+  async checkRegistrationStatus() {
+    return this.get<{ registrationAllowed: boolean; message: string }>('/users/registration-status');
+  }
+
   async registerDefaultUser(email: string, password: string, userName: string) {
     return this.post<RegisterResponse>('/users/registerDefaultUser', { email, password, userName });
   }
@@ -146,6 +150,35 @@ class ApiClient {
     return this.delete<{ success: boolean; message: string }>(`/users/${userId}`, token);
   }
 
+  // Tenant Management (Admin)
+  async getAllTenants(token: string) {
+    return this.get<TenantInfo[]>('/admin/tenants', token);
+  }
+
+  async createTenant(request: CreateTenantRequest, token: string) {
+    return this.post<CreateTenantResponse>('/admin/tenants', request, token);
+  }
+
+  async updateTenant(tenantId: number, updates: Partial<CreateTenantRequest>, token: string) {
+    return this.put<{ success: boolean; message: string }>(`/admin/tenants/${tenantId}`, updates, token);
+  }
+
+  async deleteTenant(tenantId: number, token: string) {
+    return this.delete<{ success: boolean; message: string }>(`/admin/tenants/${tenantId}`, token);
+  }
+
+  async createUserWithTenants(request: CreateUserWithTenantsRequest, token: string) {
+    return this.post<CreateUserResponse>('/admin/users', request, token);
+  }
+
+  async assignUserToTenant(userId: number, request: AssignUserToTenantRequest, token: string) {
+    return this.post<{ success: boolean; message: string }>(`/admin/users/${userId}/tenants`, request, token);
+  }
+
+  async resetUserPassword(userId: number, temporaryPassword: string, token: string) {
+    return this.post<{ success: boolean; message: string }>(`/admin/users/${userId}/password/reset`, { temporaryPassword }, token);
+  }
+
   // File Operations
   async getUserFiles(token: string, category?: string) {
     const endpoint = category ? `/files/metadata/user?category=${category}` : '/files/metadata/user';
@@ -199,6 +232,15 @@ class ApiClient {
 
   async getSearchAnalytics(token: string) {
     return this.get<SearchAnalytics>('/search-history/analytics', token);
+  }
+
+  // Multi-Tenant Management
+  async switchTenant(tenantId: number, token: string) {
+    return this.post<SwitchTenantResponse>('/users/switch-tenant', { tenantId }, token);
+  }
+
+  async getUserTenants(token: string) {
+    return this.get<UserTenantInfo[]>('/users/me/tenants', token);
   }
 
   // File upload with optional inference configuration
@@ -586,6 +628,101 @@ export interface SearchAnalytics {
   resultCountDistribution: Record<string, number>;
   topQueries: string[];
   searchesByDay?: Record<string, number>;
+}
+
+// Multi-Tenant Types
+export interface UserTenantInfo {
+  tenantId: number;
+  tenantKey: string;
+  tenantDisplayName: string;
+  role: string;
+  isActive: boolean;
+  joinedAt: string;
+}
+
+export interface SwitchTenantResponse {
+  success: boolean;
+  message: string;
+  token: string;
+  activeTenantId: number;
+}
+
+// Admin Management Types
+export interface TenantInfo {
+  id: number;
+  tenantKey: string;
+  displayName: string;
+  description?: string;
+  isActive: boolean;
+  subscriptionTier: string;
+  maxStorageQuota?: number;
+  maxUsers?: number;
+  maxFileSize?: number;
+  enableInference: boolean;
+  enableSearch: boolean;
+  enablePublicSharing: boolean;
+  billingEmail?: string;
+  createdAt: string;
+  updatedAt: string;
+  currentUserCount?: number;
+  currentStorageUsed?: number;
+}
+
+export interface CreateTenantRequest {
+  tenantKey: string;
+  displayName: string;
+  description?: string;
+  subscriptionTier?: string;
+  maxStorageQuota?: number;
+  maxUsers?: number;
+  maxFileSize?: number;
+  enableInference?: boolean;
+  enableSearch?: boolean;
+  enablePublicSharing?: boolean;
+  billingEmail?: string;
+}
+
+export interface CreateTenantResponse {
+  success: boolean;
+  tenant: TenantInfo;
+  message: string;
+}
+
+export interface TenantAssignment {
+  tenantId: number;
+  role: string;
+}
+
+export interface CreateUserWithTenantsRequest {
+  email: string;
+  userName: string;
+  firstName?: string;
+  lastName?: string;
+  temporaryPassword: string;
+  tenants: TenantAssignment[];
+  sourceSystem?: string;
+}
+
+export interface CreateUserResponse {
+  success: boolean;
+  user: {
+    id: number;
+    email: string;
+    userName: string;
+    firstName?: string;
+    lastName?: string;
+    isActive: boolean;
+    mustChangePassword: boolean;
+    sourceSystem?: string;
+    tenants: UserTenantInfo[];
+  };
+  temporaryPassword: string;
+  message: string;
+}
+
+export interface AssignUserToTenantRequest {
+  tenantId: number;
+  role: string;
 }
 
 export const apiClient = new ApiClient();

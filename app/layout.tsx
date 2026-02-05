@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Instrument_Serif, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { QueryProvider } from "@/providers/QueryProvider";
 import { Toaster } from 'sonner';
 
 const instrumentSerif = Instrument_Serif({
@@ -28,20 +29,22 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${instrumentSerif.variable} ${inter.variable} antialiased`}>
       <body className="font-sans">
-        <AuthProvider>
-          <div className="relative min-h-screen">
-            {children}
-          </div>
-        </AuthProvider>
-        <Toaster 
-          position="top-right"
-          richColors
-          closeButton
-          duration={4000}
-          toastOptions={{
-            className: "bg-vault-surface border-vault-border text-vault-text-primary font-sans",
-          }}
-        />
+        <QueryProvider>
+          <AuthProvider>
+            <div className="relative min-h-screen">
+              {children}
+            </div>
+          </AuthProvider>
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            duration={4000}
+            toastOptions={{
+              className: "bg-vault-surface border-vault-border text-vault-text-primary font-sans",
+            }}
+          />
+        </QueryProvider>
       </body>
     </html>
   );

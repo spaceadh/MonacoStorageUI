@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient, LicenseInfo } from '@/lib/api';
+import { apiClient, LicenseInfo, UserTenantInfo } from '@/lib/api';
 import { toast } from 'sonner';
 
 export interface User {
@@ -13,6 +13,8 @@ export interface User {
   avatarUrl: string | null;
   role: string;
   isActive: boolean;
+  tenants?: UserTenantInfo[];
+  activeTenantId?: number;
 }
 
 interface AuthContextType {
@@ -24,6 +26,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   signup: (email: string, password: string, name: string) => Promise<void>;
+  switchTenant: (tenantId: number) => Promise<void>;
+  loadUserTenants: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -174,6 +178,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loadUserTenants = async () => {
+    if (!accessToken) return;
+
+    try {
+      const tenants = await apiClient.getUserTenants(accessToken);
+      if (user && tenants) {
+        const updatedUser = { ...user, tenants };
+        setUser(updatedUser);
+        localStorage.setItem('monaco_user', JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.error('Failed to load user tenants:', error);
+    }
+  };
+
+  const switchTenant = async (tenantId: number) => {
+    if (!accessToken) {
+      toast.error('Not authenticated');
+      return;
+    }
+
+    try {
+      const response = await apiClient.switchTenant(tenantId, accessToken);
+
+      if (response.success && response.token) {
+        setAccessToken(response.token);
+        localStorage.setItem('monaco_token', response.token);
+
+        if (user) {
+          const updatedUser = { ...user, activeTenantId: response.activeTenantId };
+          setUser(updatedUser);
+          localStorage.setItem('monaco_user', JSON.stringify(updatedUser));
+        }
+
+        const activeTenant = user?.tenants?.find(t => t.tenantId === tenantId);
+        toast.success(`Switched to ${activeTenant?.tenantDisplayName || 'tenant'}`);
+
+        window.location.reload();
+      }
+    } catch (error: any) {
+      console.error('Failed to switch tenant:', error);
+      const message = error?.response?.data?.message || 'Failed to switch tenant';
+      toast.error(message);
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     licenses,
@@ -183,6 +234,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     logout,
     signup,
+    switchTenant,
+    loadUserTenants,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
