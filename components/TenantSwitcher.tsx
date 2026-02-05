@@ -57,12 +57,12 @@ export function TenantSwitcher() {
     );
   }
 
-  if (!tenants || tenants.length <= 1) {
+  if (!tenants || tenants.length === 0) {
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 border border-vault-border bg-vault-surface/50">
         <Building2 className="h-3.5 w-3.5 text-vault-text-secondary" strokeWidth={1.5} />
         <span className="text-[10px] uppercase tracking-[0.15em] text-vault-text-primary font-medium">
-          {activeTenant?.tenantDisplayName || "Default Tenant"}
+          No Tenant
         </span>
       </div>
     );

@@ -225,7 +225,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="overflow-x-auto -mx-4 sm:mx-0">
-                <table className="w-full text-left min-w-[640px]">
+                <table className="w-full text-left min-w-160">
                   <thead>
                     <tr className="border-b border-vault-border">
                       <th className="px-3 sm:px-6 py-4 sm:py-6 text-[10px] font-medium text-vault-text-secondary uppercase tracking-[0.2em]">Asset Name</th>
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                       <tr key={file.id} className="hover:bg-vault-surface/50 transition-colors group">
                         <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <div className="flex items-center gap-2 sm:gap-4">
-                            <div className="h-6 w-6 sm:h-8 sm:w-8 flex items-center justify-center text-vault-text-primary border border-vault-border bg-vault-surface flex-shrink-0">
+                            <div className="h-6 w-6 sm:h-8 sm:w-8 flex items-center justify-center text-vault-text-primary border border-vault-border bg-vault-surface shrink-0">
                               <IconFiles className="h-3 w-3 sm:h-4 sm:w-4" strokeWidth={1} />
                             </div>
                             <div className="min-w-0">
@@ -289,7 +289,7 @@ export default function DashboardPage() {
 }
 
 const FilesPreview = ({ files }: { files: FileMeta[] }) => (
-  <div className="flex flex-col gap-3 p-4 w-full h-full min-h-[10rem] bg-vault-bg border border-vault-border">
+  <div className="flex flex-col gap-3 p-4 w-full h-full min-h-40 bg-vault-bg border border-vault-border">
     {files.length === 0 ? (
       <div className="h-full flex flex-col items-center justify-center text-vault-text-secondary/40">
         <IconFiles className="h-8 w-8 mb-2" strokeWidth={1} />
@@ -307,10 +307,10 @@ const FilesPreview = ({ files }: { files: FileMeta[] }) => (
 );
 
 const ActivityPreview = ({ files }: { files: FileMeta[] }) => (
-  <div className="flex flex-col gap-3 p-4 w-full h-full min-h-[10rem] bg-vault-bg border border-vault-border">
+  <div className="flex flex-col gap-3 p-4 w-full h-full min-h-40 bg-vault-bg border border-vault-border">
     {files.slice(0, 4).map(f => (
       <div key={f.id} className="flex items-center justify-between gap-2 text-[10px] text-vault-text-secondary border-b border-vault-border/50 pb-2 last:border-0 last:pb-0">
-        <span className="truncate max-w-[150px] font-medium text-vault-text-primary">{f.fileName}</span>
+        <span className="truncate max-w-37.5 font-medium text-vault-text-primary">{f.fileName}</span>
         <span className="tabular-nums opacity-60">{formatDate(f.uploadedAt)}</span>
       </div>
     ))}
@@ -318,14 +318,14 @@ const ActivityPreview = ({ files }: { files: FileMeta[] }) => (
 );
 
 const UploadBrief = () => (
-  <div className="flex flex-col items-center justify-center p-4 w-full h-full min-h-[8rem] bg-vault-surface border border-dashed border-vault-border group hover:border-vault-accent transition-colors">
+  <div className="flex flex-col items-center justify-center p-4 w-full h-full min-h-32 bg-vault-surface border border-dashed border-vault-border group hover:border-vault-accent transition-colors">
     <IconUpload className="h-8 w-8 text-vault-text-secondary group-hover:text-vault-accent transition-colors" strokeWidth={1} />
     <span className="text-[10px] uppercase tracking-widest text-vault-text-secondary mt-3 font-bold group-hover:text-vault-accent">Ready for Deposit</span>
   </div>
 );
 
 const Skeleton = () => (
-  <div className="flex flex-1 w-full h-full min-h-[8rem] bg-vault-surface border border-vault-border relative overflow-hidden">
+  <div className="flex flex-1 w-full h-full min-h-32 bg-vault-surface border border-vault-border relative overflow-hidden">
     <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
   </div>
 );

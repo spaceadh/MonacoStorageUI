@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient, TenantInfo, CreateTenantRequest } from "@/lib/api";
+import {
+  apiClient,
+  TenantInfo,
+  CreateTenantRequest,
+  CreateUserWithTenantsRequest,
+  AssignUserToTenantRequest
+} from "@/lib/api";
 import { User,useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -176,6 +182,66 @@ export function useSwitchActiveTenant(
     },
     onError: () => {
       toast.error("Failed to switch tenant/product");
+    },
+  });
+}
+
+// Hook to create a user with multi-tenant assignment
+export function useCreateUser(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (request: CreateUserWithTenantsRequest) => {
+      if (!accessToken) throw new Error("No access token");
+      return await apiClient.createUserWithTenants(request, accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() });
+      toast.success("User created successfully");
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || "Failed to create user";
+      toast.error(message);
+    },
+  });
+}
+
+// Hook to assign user to a tenant
+export function useAssignUserToTenant(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, request }: { userId: number; request: AssignUserToTenantRequest }) => {
+      if (!accessToken) throw new Error("No access token");
+      return await apiClient.assignUserToTenant(userId, request, accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() });
+      toast.success("User assigned to tenant successfully");
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || "Failed to assign user to tenant";
+      toast.error(message);
+    },
+  });
+}
+
+// Hook to reset user password
+export function useResetUserPassword(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, temporaryPassword }: { userId: number; temporaryPassword: string }) => {
+      if (!accessToken) throw new Error("No access token");
+      return await apiClient.resetUserPassword(userId, temporaryPassword, accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() });
+      toast.success("Password reset successfully");
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || "Failed to reset password";
+      toast.error(message);
     },
   });
 }
