@@ -129,8 +129,12 @@ class ApiClient {
     return this.post<GeneratedAPIKeyResponse>('/apikeys/generate', { name, expiresInDays, scopes }, token);
   }
 
+  async updateApiKey(id: number, updates: UpdateApiKeyRequest, token: string) {
+    return this.put<UpdateApiKeyResponse>(`/apikeys/${id}`, updates, token);
+  }
+
   async revokeApiKey(id: number, token: string) {
-    return this.delete<void>(`/apikeys/${id}`, token);
+    return this.delete<RevokeApiKeyResponse>(`/apikeys/${id}`, token);
   }
 
   async getUserQuota(token: string) {
@@ -376,7 +380,24 @@ export interface GetAPIKeysResponse {
 
 export interface GeneratedAPIKeyResponse {
   message: string;
-  response: GeneratedApiKey;
+  data: GeneratedApiKey;
+}
+
+export interface UpdateApiKeyRequest {
+  name?: string;
+  scopes?: string[];
+  isActive?: boolean;
+}
+
+export interface UpdateApiKeyResponse {
+  message: string;
+  success: boolean;
+  data: ApiKey;
+}
+
+export interface RevokeApiKeyResponse {
+  message: string;
+  success: boolean;
 }
 
 export interface getLicenseInfoResponse {

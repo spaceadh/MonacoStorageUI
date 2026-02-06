@@ -245,3 +245,83 @@ export function useResetUserPassword(accessToken: string | null) {
     },
   });
 }
+
+// Query keys for API keys
+export const apiKeyKeys = {
+  all: ["apiKeys"] as const,
+  lists: () => [...apiKeyKeys.all, "list"] as const,
+};
+
+// Hook to fetch all API keys for the current user
+export function useApiKeys(accessToken: string | null) {
+  return useQuery({
+    queryKey: apiKeyKeys.lists(),
+    queryFn: async () => {
+      if (!accessToken) throw new Error("No access token");
+      const response = await apiClient.getApiKeys(accessToken);
+      return response.data || [];
+    },
+    enabled: !!accessToken,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// Hook to generate a new API key
+export function useGenerateApiKey(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ name, expiresInDays, scopes }: { name: string; expiresInDays: number; scopes?: string[] }) => {
+      if (!accessToken) throw new Error("No access token");
+      return await apiClient.generateApiKey(name, accessToken, expiresInDays, scopes);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: apiKeyKeys.lists() });
+      toast.success("API key generated successfully");
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || "Failed to generate API key";
+      toast.error(message);
+    },
+  });
+}
+
+// Hook to update an API key
+export function useUpdateApiKey(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: number; updates: { name?: string; scopes?: string[]; isActive?: boolean } }) => {
+      if (!accessToken) throw new Error("No access token");
+      return await apiClient.updateApiKey(id, updates, accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: apiKeyKeys.lists() });
+      toast.success("API key updated successfully");
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || "Failed to update API key";
+      toast.error(message);
+    },
+  });
+}
+
+// Hook to revoke (delete) an API key
+export function useRevokeApiKey(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      if (!accessToken) throw new Error("No access token");
+      return await apiClient.revokeApiKey(id, accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: apiKeyKeys.lists() });
+      toast.success("API key revoked successfully");
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || "Failed to revoke API key";
+      toast.error(message);
+    },
+  });
+}

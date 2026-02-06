@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { apiClient, ApiKey, GeneratedApiKey } from "@/lib/api";
+import { GeneratedApiKey } from "@/lib/api";
 import {
     Plus,
     Trash2,
@@ -11,86 +11,44 @@ import {
     Key,
     Loader2,
     RefreshCw,
-    X,
-    Eye,
-    EyeOff,
-    ShieldAlert,
     Terminal
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { useApiKeys, useGenerateApiKey, useRevokeApiKey } from "@/hooks/useAdmin";
 
 export default function ApiKeysPage() {
     const { accessToken, isLoading: authLoading } = useAuth();
-    const [keys, setKeys] = useState<ApiKey[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [showGenerateModal, setShowGenerateModal] = useState(false);
     const [generatedKey, setGeneratedKey] = useState<GeneratedApiKey | null>(null);
     const [newKey, setNewKey] = useState({ name: "", expiresInDays: 365 });
-    const [isGenerating, setIsGenerating] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    useEffect(() => {
-        if (!authLoading && accessToken) {
-            loadKeys();
-        }
-    }, [accessToken, authLoading]);
-
-    const loadKeys = async () => {
-        if (!accessToken) return;
-        try {
-            setIsLoading(true);
-            setError(null);
-            const result = await apiClient.getApiKeys(accessToken);
-            if (result) {
-                setKeys(result.data);
-            } else {
-                setError("Failed to retrieve access inventory");
-            }
-        } catch (err) {
-            setError("Failed to retrieve access inventory");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // Use React Query hooks
+    const { data: keys = [], isLoading, refetch } = useApiKeys(accessToken);
+    const generateMutation = useGenerateApiKey(accessToken);
+    const revokeMutation = useRevokeApiKey(accessToken);
 
     const handleGenerateKey = async () => {
-        if (!accessToken) return;
-
-        try {
-            setIsGenerating(true);
-            const result = await apiClient.generateApiKey(
-                newKey.name,
-                accessToken,
-                newKey.expiresInDays,
-                ["files:read", "files:write"]
-            );
-            if (result) {
-                setGeneratedKey(result.response);
-                setNewKey({ name: "", expiresInDays: 365 });
-                loadKeys();
-            } else {
-                setError("Protocol failure: Key generation rejected");
+        generateMutation.mutate(
+            {
+                name: newKey.name,
+                expiresInDays: newKey.expiresInDays,
+                scopes: ["files:read", "files:write"],
+            },
+            {
+                onSuccess: (response) => {
+                    setGeneratedKey(response.data);
+                    setNewKey({ name: "", expiresInDays: 365 });
+                },
             }
-        } catch (err) {
-            setError("Protocol failure: Key generation rejected");
-        } finally {
-            setIsGenerating(false);
-        }
+        );
     };
 
     const handleRevokeKey = async (id: number) => {
-        if (!accessToken) return;
         if (!confirm("Confirm permanent revocation of this access token? Programmatic access will be immediately terminated."))
             return;
-
-        try {
-            await apiClient.revokeApiKey(id, accessToken);
-            loadKeys();
-        } catch (err) {
-            setError("Protocol failure: Revocation denied");
-        }
+        revokeMutation.mutate(id);
     };
 
     const copyToClipboard = async (text: string) => {
@@ -122,7 +80,7 @@ export default function ApiKeysPage() {
                     </div>
                     <div className="flex gap-4">
                         <button
-                            onClick={loadKeys}
+                            onClick={() => refetch()}
                             className="flex items-center gap-2 px-4 py-2 border border-vault-border hover:border-vault-accent text-vault-text-secondary hover:text-vault-accent transition-colors"
                         >
                             <RefreshCw className="h-3 w-3" strokeWidth={1.5} />
@@ -137,19 +95,6 @@ export default function ApiKeysPage() {
                         </button>
                     </div>
                 </div>
-
-                {/* Error Banner */}
-                {error && (
-                    <div className="bg-red-900/10 border border-red-900/20 p-4 flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <ShieldAlert className="h-4 w-4 text-red-700" />
-                            <p className="text-red-800 text-[11px] uppercase tracking-wider font-medium">{error}</p>
-                        </div>
-                        <button onClick={() => setError(null)} className="text-red-700 hover:text-red-900">
-                            <X className="h-4 w-4" />
-                        </button>
-                    </div>
-                )}
 
                 {/* Ledger Table */}
                 <div className="border-t border-vault-border">
@@ -271,10 +216,10 @@ export default function ApiKeysPage() {
                                 </button>
                                 <button
                                     onClick={handleGenerateKey}
-                                    disabled={!newKey.name || isGenerating}
+                                    disabled={!newKey.name || generateMutation.isPending}
                                     className="flex items-center gap-3 px-8 py-3 bg-vault-accent hover:bg-vault-text-primary disabled:opacity-30 text-vault-bg transition-colors"
                                 >
-                                    {isGenerating ? (
+                                    {generateMutation.isPending ? (
                                         <>
                                             <Loader2 className="h-4 w-4 animate-spin" />
                                             <span className="text-[11px] uppercase tracking-widest font-bold">Processing...</span>
